@@ -1,6 +1,6 @@
 {
   "name": "@camoto/gameinfo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Generic interface for modifying supported DOS games",
   "bin": {
     "gameinfo": "./bin/gameinfo.js"
@@ -28,8 +28,8 @@
   },
   "homepage": "https://github.com/Malvineous/gameinfojs#readme",
   "dependencies": {
-    "@camoto/gamecode": "0.0.1",
-    "@malvineous/gamearchive": "^2.2.0",
+    "@camoto/gamearchive": "^2.2.1",
+    "@camoto/gamecode": "0.0.2",
     "debug": "^4.3.1"
   },
   "devDependencies": {
