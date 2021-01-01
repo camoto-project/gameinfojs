@@ -1,0 +1,44 @@
+{
+  "name": "@camoto/gameinfo",
+  "version": "0.0.1",
+  "description": "Generic interface for modifying supported DOS games",
+  "bin": {
+    "gameinfo": "./bin/gameinfo.js"
+  },
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Malvineous/gameinfojs.git"
+  },
+  "keywords": [
+    "camoto",
+    "dos",
+    "ms-dos",
+    "games",
+    "modding"
+  ],
+  "author": "Adam Nielsen <malvineous@shikadi.net>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Malvineous/gameinfojs/issues"
+  },
+  "homepage": "https://github.com/Malvineous/gameinfojs#readme",
+  "dependencies": {
+    "@camoto/gamecode": "0.0.1",
+    "@malvineous/gamearchive": "^2.2.0",
+    "debug": "^4.3.1"
+  },
+  "devDependencies": {
+    "command-line-args": "^5.1.1",
+    "eslint": "^7.16.0",
+    "mocha": "^8.2.1",
+    "mocha-eslint": "^6.0.0"
+  },
+  "directories": {
+    "test": "test"
+  }
+}
