@@ -29,7 +29,7 @@ import GameCode_exe_cosmo1 from '@camoto/gamecode/formats/exe-cosmo1.js';
 import GameCodeDecompress from '@camoto/gamecode/util/decompress.js';
 import Game from '../interface/game.js';
 
-import Archive_VOL from '@malvineous/gamearchive/formats/arc-vol-cosmo.js';
+import Archive_VOL from '@camoto/gamearchive/formats/arc-vol-cosmo.js';
 
 function attributesToItems(attributes, prefix, cb)
 {

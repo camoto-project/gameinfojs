@@ -17,87 +17,68 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+export * from './games/index.js';
+
+export { default as Filesystem } from './interface/filesystem.js';
+export { default as Game } from './interface/game.js';
+import * as games from './games/index.js';
+
 import Debug from './util/debug.js';
 const debug = Debug.extend('index');
 
-import Game from './interface/game.js';
-import Game_Cosmo from './games/game-cosmo.js';
-
-const fileTypes = [
-	Game_Cosmo,
+/**
+ * Get a list of all the available handlers.
+ *
+ * This is preferable to `import *` because most libraries also export utility
+ * functions like the autodetection routine which would be included even though
+ * they are not format handlers.
+ */
+export const all = [
+	...Object.values(games),
 ];
 
 /**
- * Main library interface.
+ * Get a handler by examining the game folder.
+ *
+ * @param {Filesystem} filesystem
+ *   Path to game folder.
+ *
+ * @return {Array<Game>} from games/*.js that can handle the game, or an
+ *   empty array if the format could not be identified.
+ *
+ * @example
+ * import {
+ *   findHandler as gameinfoFindHandler,
+ *   Filesystem,
+ * } from '@camoto/gameinfo';
+ *
+ * const gameFolder = new Filesystem('/dos/games/cosmo');
+ * const handler = gameinfoFindHandler(gameFolder);
+ *
+ * if (handler.length === 0) {
+ *   console.log('Unable to identify game.');
+ * } else {
+ *   const md = handler[0].metadata();
+ *   console.log('Game is in ' + md.id + ' format');
+ * }
  */
-export default class GameInfo
-{
-	/**
-	 * Get a handler by ID directly.
-	 *
-	 * @param {string} type
-	 *   Identifier of desired file format.
-	 *
-	 * @return {CodeHandler} from formats/*.js matching requested code, or null
-	 *   if the code is invalid.
-	 *
-	 * @example const handler = GameCode.getHandler('exe-cosmo1');
-	 */
-	static getHandler(type)
-	{
-		return fileTypes.find(x => type === x.metadata().id);
-	}
-
-	/**
-	 * Get a handler by examining the contents of a folder.
-	 *
-	 * @param {Filesystem} filesystem
-	 *   Path to game folder.
-	 *
-	 * @return {Array<Game>} from games/*.js that can handle the game, or an
-	 *   empty array if the format could not be identified.
-	 *
-	 * @example
-	 * const handler = GameCode.findHandler('/dos/games/cosmo');
-	 * if (!handler) {
-	 *   console.log('Unable to identify game.');
-	 * } else {
-	 *   const md = handler.metadata();
-	 *   console.log('Game is ' + md.id);
-	 * }
-	 */
-	static async findHandler(filesystem)
-	{
-		let handlers = [];
-		for (const x of fileTypes) {
-			const metadata = x.metadata();
-			debug(`Trying format handler ${metadata.id} (${metadata.title})`);
-			const confidence = await x.identify(filesystem);
-			if (confidence.valid === true) {
-				handlers = [x];
-				break;
-			}
-			if (confidence.valid === undefined) {
-				handlers.push(x);
-				// keep going to look for a better match
-			}
-			debug(` - Handler reported: ${confidence.reason}`);
+export function findHandler(filesystem) {
+	let handlers = [];
+	for (const x of all) {
+		const metadata = x.metadata();
+		debug(`Trying format handler ${metadata.id} (${metadata.title})`);
+		const confidence = x.identify(filesystem);
+		if (confidence.valid === true) {
+			debug(`Matched ${metadata.id}: ${confidence.reason}`);
+			handlers = [x];
+			break;
+		} else if (confidence.valid === undefined) {
+			debug(`Possible match for ${metadata.id}: ${confidence.reason}`);
+			handlers.push(x);
+			// keep going to look for a better match
+		} else {
+			debug(`Not ${metadata.id}: ${confidence.reason}`);
 		}
-
-		return handlers;
 	}
-
-	/**
-	 * Get a list of all the available handlers.
-	 *
-	 * This is probably only useful when testing the library.
-	 *
-	 * @return {Array} of file format handlers, with each element being just like
-	 *   the return value of getHandler().
-	 */
-	static listHandlers() {
-		return fileTypes;
-	}
+	return handlers;
 };
-
-GameInfo.Game = Game;

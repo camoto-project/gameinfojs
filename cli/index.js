@@ -20,9 +20,12 @@
 import commandLineArgs from 'command-line-args';
 import Debug from '../util/debug.js';
 const debug = Debug.extend('cli');
-
-import Filesystem from '../interface/filesystem.js';
-import GameInfo from '../index.js';
+import {
+	Filesystem,
+	Game,
+	all as gameinfoFormats,
+	findHandler as gameinfoFindHandler,
+} from '../index.js';
 
 class OperationsError extends Error {
 }
@@ -48,8 +51,8 @@ class Operations
 			if (
 				minor
 				&& [
-					GameInfo.Game.Severity.Critical,
-					GameInfo.Game.Severity.Important,
+					Game.Severity.Critical,
+					Game.Severity.Important,
 				].includes(warning.severity)
 			) {
 				minor = false;
@@ -67,7 +70,7 @@ class Operations
 				const item = items[i];
 				let subtitle = item.subtitle ? ` [${item.subtitle}]` : '';
 				console.log('  '.repeat(depth) + `* ${i} [${item.type}]: ${item.title}${subtitle}`);
-				if (item.type === GameInfo.Game.ItemTypes.Folder) {
+				if (item.type === Game.ItemTypes.Folder) {
 					show(depth + 1, item.children);
 				}
 			}
@@ -78,7 +81,7 @@ class Operations
 	async open(params) {
 		let handler;
 		if (params.format) {
-			handler = GameInfo.getHandler(params.format);
+			handler = gameinfoFormats.find(h => h.metadata().id === params.format);
 			if (!handler) {
 				throw new OperationsError('Invalid format code: ' + params.format);
 			}
@@ -87,9 +90,9 @@ class Operations
 			throw new OperationsError('open: missing path');
 		}
 
-		let fs = new Filesystem(params.target);
+		let gameFolder = new Filesystem(params.target);
 		if (!handler) {
-			let handlers = await GameInfo.findHandler(fs);
+			let handlers = gameinfoFindHandler(gameFolder);
 			if (handlers.length === 0) {
 				throw new OperationsError('Unable to identify this game.');
 			}
@@ -104,7 +107,7 @@ class Operations
 			handler = handlers[0];
 		}
 
-		this.game = new handler(fs);
+		this.game = new handler(gameFolder);
 		const warnings = await this.game.open();
 		if (warnings.length) {
 			console.error('There were warnings opening this game:');
@@ -112,7 +115,6 @@ class Operations
 				console.error(` * ${warning}`);
 			}
 		}
-		this.origFormat = handler.metadata().id;
 	}
 
 	async rename(params) {
@@ -151,7 +153,7 @@ class Operations
 		for (const i of Object.keys(root)) {
 			const item = root[i];
 			if (i === id) return item;
-			if (item.type === GameInfo.Game.ItemTypes.Folder) {
+			if (item.type === Game.ItemTypes.Folder) {
 				const c = this.findItem(id, item.children);
 				if (c) return c;
 			}
@@ -190,13 +192,13 @@ Object.keys(aliases).forEach(cmd => {
 
 function listFormats()
 {
-	GameInfo.listHandlers().forEach(handler => {
+	for (const handler of gameinfoFormats) {
 		const md = handler.metadata();
 		console.log(`${md.id}: ${md.title}`);
 		if (md.params) Object.keys(md.params).forEach(p => {
 			console.log(`  * ${p}: ${md.params[p]}`);
 		});
-	});
+	}
 }
 
 async function processCommands()
