@@ -47,7 +47,7 @@
 			}
 		},
 		{
-			"files": ["formats/**/*.js"],
+			"files": ["games/**/*.js"],
 			"rules": {
 				"no-console": [
 					"error",
