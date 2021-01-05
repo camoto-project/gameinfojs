@@ -119,19 +119,20 @@ class Operations
 	}
 
 	async rename(params) {
-		const gameItems = await this.game.items();
-		const item = this.findItem(params.target, gameItems);
-		if (!item) {
-			throw new OperationsError(`Unable to find item "${params.target}".`);
+		if (!this.item) {
+			throw new OperationsError(`rename: must 'select' an item first.`);
 		}
-		if (!item.fnRename) {
-			throw new OperationsError(`The item "${params.target}" does not support being renamed.`);
+		if (!params.target) {
+			throw new OperationsError(`rename: must specify new name.`);
+		}
+		if (!this.item.fnRename) {
+			throw new OperationsError(`rename: the selected item does not support being renamed.`);
 		}
 		try {
-			await item.fnRename(params.new);
+			await this.item.fnRename(params.target);
 		} catch (e) {
 			debug(e);
-			throw new OperationsError(`Rename failed: ${e.message}`);
+			throw new OperationsError(`rename: ${e.message}`);
 		}
 	}
 
@@ -139,14 +140,22 @@ class Operations
 		if (!params.force) {
 			const r = await this.check();
 			if (!r) {
-				throw new OperationsError('Save failed: fix the warnings and try again.');
+				throw new OperationsError('save: fix the warnings and try again.');
 			}
 		}
 		try {
 			await this.game.save();
 		} catch (e) {
 			debug(e);
-			throw new OperationsError(`Save failed: ${e.message}`);
+			throw new OperationsError(`save: ${e.message}`);
+		}
+	}
+
+	async select(params) {
+		const gameItems = await this.game.items();
+		this.item = this.findItem(params.target, gameItems);
+		if (!this.item) {
+			throw new OperationsError(`select: unable to find item "${params.target}".`);
 		}
 	}
 
@@ -172,11 +181,13 @@ Operations.names = {
 		{ name: 'target', defaultOption: true },
 	],
 	rename: [
-		{ name: 'new', alias: 'n' },
 		{ name: 'target', defaultOption: true },
 	],
 	save: [
 		{ name: 'force', alias: 'f', type: Boolean },
+	],
+	select: [
+		{ name: 'target', defaultOption: true },
 	],
 };
 
