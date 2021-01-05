@@ -19,6 +19,12 @@
 
 import chalk from 'chalk';
 import commandLineArgs from 'command-line-args';
+import fs from 'fs';
+import {
+	Music,
+	Patch,
+	all as gamemusicFormats,
+} from '@camoto/gamemusic';
 import Debug from '../util/debug.js';
 const debug = Debug.extend('cli');
 import {
@@ -60,6 +66,124 @@ class Operations
 			}
 		}
 		return minor;
+	}
+
+	async export(params) {
+		if (!this.item) {
+			throw new OperationsError(`export: must 'select' an item first.`);
+		}
+		if (!this.item.fnOpen) {
+			throw new OperationsError(`export: this item does not support being opened.`);
+		}
+		if (!params.format) {
+			throw new OperationsError(`export: must specify an output format with -f.`);
+		}
+		if (!params.target) {
+			throw new OperationsError(`export: must specify an output filename.`);
+		}
+		let doc;
+		try {
+			doc = this.item.fnOpen();
+		} catch (e) {
+			debug(e);
+			throw new OperationsError(`export: error opening item - ${e.message}`);
+		}
+		if (doc instanceof Music) {
+			const handler = gamemusicFormats.find(h => h.metadata().id === params.format);
+			if (!handler) {
+				throw new OperationsError(`export: invalid music format '${params.format}'.`);
+			}
+
+			const problems = handler.checkLimits(doc);
+			if (problems.length) {
+				console.log('There are problems preventing the file from being saved:\n');
+				for (let i = 0; i < problems.length; i++) {
+					console.log((i + 1).toString().padStart(2) + ': ' + problems[i]);
+				}
+				console.log('\nPlease correct these issues and try again.\n');
+				throw new OperationsError(`export: unable to export as `
+					+ `'${params.format}' due to file format limitations.`);
+			}
+
+			let content, warnings;
+			try {
+				({ content, warnings } = handler.generate(doc));
+			} catch (e) {
+				debug(e);
+				throw new OperationsError(`export: MusicHandler.generate() failed - ${e.message}`);
+			}
+
+			let promises = [];
+			const suppList = handler.supps(params.target, content.main);
+			if (suppList) Object.keys(suppList).forEach(id => {
+				console.warn(' - Saving supplemental file', suppList[id]);
+				promises.push(
+					fs.promises.writeFile(suppList[id], content[id])
+				);
+			});
+			promises.push(fs.promises.writeFile(params.target, content.main));
+
+			if (warnings.length) {
+				console.log('There were warnings generated while saving:\n');
+				for (let i in warnings) {
+					console.log(((i >>> 0) + 1).toString().padStart(2) + '. ' + warnings[i]);
+				}
+			}
+
+			await Promise.all(promises);
+
+		} else {
+			throw new OperationsError(`export: cannot export this document type.`);
+		}
+	}
+
+	async extract(params) {
+		if (!this.item) {
+			throw new OperationsError(`extract: must 'select' an item first.`);
+		}
+		if (!this.item.fnExtract) {
+			throw new OperationsError(`extract: this item does not support being extracted.`);
+		}
+		if (!params.target) {
+			throw new OperationsError(`extract: must specify an output filename.`);
+		}
+
+		const content = this.item.fnExtract();
+		await fs.promises.writeFile(params.target, content);
+	}
+
+	async info() {
+		if (!this.item) {
+			throw new OperationsError(`info: must 'select' an item first.`);
+		}
+		if (!this.item.fnOpen) {
+			throw new OperationsError(`info: this item does not support being opened.`);
+		}
+		let doc;
+		try {
+			doc = this.item.fnOpen();
+		} catch (e) {
+			debug(e);
+			throw new OperationsError(`info: error opening item - ${e.message}`);
+		}
+
+		process.stdout.write(`Object class: ${doc.constructor.name}\n`);
+		if (doc instanceof Music) {
+			process.stdout.write(`Document type: Music\n`);
+			process.stdout.write(`Number of tracks: ${doc.trackConfig.length}\n`);
+			const instCount = {
+				MIDI: doc.patches.filter(p => p instanceof Patch.MIDI).length,
+				OPL: doc.patches.filter(p => p instanceof Patch.OPL).length,
+				PCM: doc.patches.filter(p => p instanceof Patch.PCM).length,
+			};
+			process.stdout.write(`Number of instruments:`);
+			for (const [ type, count ] of Object.entries(instCount)) {
+				process.stdout.write(chalk` ${type}:{greenBright ${count}}`);
+			}
+			process.stdout.write('\n');
+		} else {
+			process.stdout.write(`Document type: Unknown\n`);
+		}
 	}
 
 	async list() {
@@ -136,6 +260,30 @@ class Operations
 		}
 	}
 
+	async replace(params) {
+		if (!this.item) {
+			throw new OperationsError(`replace: must 'select' an item first.`);
+		}
+		if (!this.item.fnExtract) {
+			throw new OperationsError(`replace: this item does not support being replaced.`);
+		}
+		if (!params.target) {
+			throw new OperationsError(`replace: must specify a filename to read.`);
+		}
+
+		let content;
+		try {
+			content = await fs.promises.readFile(params.target);
+		} catch (e) {
+			throw new OperationsError(`replace: error reading source file - ${e.message}`);
+		}
+		try {
+			this.item.fnReplace(content);
+		} catch (e) {
+			throw new OperationsError(`replace: error performing replacement - ${e.message}`);
+		}
+	}
+
 	async save(params) {
 		if (!params.force) {
 			const r = await this.check();
@@ -175,12 +323,23 @@ class Operations
 
 Operations.names = {
 	check: [],
+	export: [
+		{ name: 'format', alias: 'f' },
+		{ name: 'target', defaultOption: true },
+	],
+	extract: [
+		{ name: 'target', defaultOption: true },
+	],
+	info: [],
 	list: [],
 	open: [
 		{ name: 'format', alias: 'f' },
 		{ name: 'target', defaultOption: true },
 	],
 	rename: [
+		{ name: 'target', defaultOption: true },
+	],
+	replace: [
 		{ name: 'target', defaultOption: true },
 	],
 	save: [
@@ -257,6 +416,35 @@ Commands:
     Write any changes back to the game files.  This will fail if there are
     important or critical warnings, but -f will ignore the warnings and force
     a save anyway.
+
+  select <id>
+    Select an item by ID for the selection commands below to work on.
+
+Selection commands:
+
+  These commands work on the item previously chosen with the 'select' command.
+
+  export -f format <file>
+    Export (convert) the selected item to a file in the given format.  Not all
+    items can be exported in this manner, but many can.
+
+  extract <file>
+    Copy the selected item into <file> in the current directory, without
+    changing or converting it, apart from decompressing or decrypting it if the
+    game had done so.  Not all items can be extracted, typically only those
+    items that translate to a single underlying file.  Counterpart to 'replace'.
+
+  info
+    Display technical information about the selected item.
+
+  rename <new>
+    Rename any underlying file to <new>.
+
+  replace <file>
+    Open <file> from the current directory and use it to overwrite the selected
+    item.  No format conversions are performed, although the content may be
+    compressed or encrypted if the underlying game requires it.  As with the
+    counterpart 'export', not everything can be replaced.
 
 Examples:
 
