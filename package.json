@@ -28,8 +28,9 @@
   },
   "homepage": "https://github.com/Malvineous/gameinfojs#readme",
   "dependencies": {
-    "@camoto/gamearchive": "^2.2.2",
-    "@camoto/gamecode": "^1.0.0",
+    "@camoto/gamearchive": "^3.0.1",
+    "@camoto/gamecode": "^1.0.1",
+    "@camoto/gamemusic": "^2.0.2",
     "debug": "^4.3.1"
   },
   "devDependencies": {
