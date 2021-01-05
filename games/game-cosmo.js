@@ -29,7 +29,8 @@ import GameCode_exe_cosmo1 from '@camoto/gamecode/formats/exe-cosmo1.js';
 import GameCodeDecompress from '@camoto/gamecode/util/decompress.js';
 import Game from '../interface/game.js';
 
-import Archive_VOL from '@camoto/gamearchive/formats/arc-vol-cosmo.js';
+import { arc_vol_cosmo } from '@camoto/gamearchive';
+import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
 
 function attributesToItems(attributes, prefix, cb)
 {
@@ -113,14 +114,14 @@ export default class Game_Cosmo extends Game
 			let content_vol = {
 				main: await this.filesystem.read(volFilename),
 			};
-			epData.vol = Archive_VOL.parse(content_vol);
+			epData.vol = arc_vol_cosmo.parse(content_vol);
 			debug(`Read ${epData.vol.files.length} files from ${volFilename}`);
 
 			const stnFilename = epData.exe.attributes['filename.archive.standard'].value;
 			let content_stn = {
 				main: await this.filesystem.read(stnFilename),
 			};
-			epData.stn = Archive_VOL.parse(content_stn);
+			epData.stn = arc_vol_cosmo.parse(content_stn);
 			debug(`Read ${epData.stn.files.length} files from ${stnFilename}`);
 		}
 
@@ -332,12 +333,12 @@ export default class Game_Cosmo extends Game
 			const epData = this.episodes[epIndex];
 
 			// Write out the .VOL archive.
-			const outputVol = Archive_VOL.generate(epData.vol);
+			const outputVol = arc_vol_cosmo.generate(epData.vol);
 			const volFilename = epData.exe.attributes['filename.archive.episode'].value;
 			await this.filesystem.write(volFilename, outputVol.main);
 
 			// Write out the .STN archive.
-			const outputStn = Archive_VOL.generate(epData.stn);
+			const outputStn = arc_vol_cosmo.generate(epData.stn);
 			const stnFilename = epData.exe.attributes['filename.archive.standard'].value;
 			await this.filesystem.write(stnFilename, outputStn.main);
 
