@@ -248,8 +248,18 @@ Commands:
 
 Examples:
 
+  # List elements in a game stored in the folder /dos/games/cosmo.
   gameinfo open /dos/games/cosmo list
+
+  # Rename the file used by the 'music.filename.1' element in the above list,
+  # which in this case renames it inside the game's .VOL archive file, as well
+  # as updating the filename inside the game's .EXE file so the game continues
+  # to run normally with the new filename.  Beware this modifies the files in
+  # the game directory!
   gameinfo open /dos/games/cosmo rename -n mysong.mni music.filename.1 save
+
+  # The DEBUG environment variable can be used for troubleshooting.
+  DEBUG='game*' gameinfo ...
 `);
 		return;
 	}
