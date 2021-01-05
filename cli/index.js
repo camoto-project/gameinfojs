@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import chalk from 'chalk';
 import commandLineArgs from 'command-line-args';
 import Debug from '../util/debug.js';
 const debug = Debug.extend('cli');
@@ -68,8 +69,8 @@ class Operations
 		function show(depth, items) {
 			for (const i of Object.keys(items)) {
 				const item = items[i];
-				let subtitle = item.subtitle ? ` [${item.subtitle}]` : '';
-				console.log('  '.repeat(depth) + `* ${i} [${item.type}]: ${item.title}${subtitle}`);
+				let subtitle = item.subtitle ? chalk` | {blueBright ${item.subtitle}}` : '';
+				console.log('  '.repeat(depth) + chalk`* [{whiteBright ${i}}]: {yellowBright ${item.title}}${subtitle} {grey (${item.type})}`);
 				if (item.type === Game.ItemTypes.Folder) {
 					show(depth + 1, item.children);
 				}
@@ -275,13 +276,13 @@ Examples:
 				await proc[cmd.name](runOptions);
 			} catch (e) {
 				if (e instanceof OperationsError) {
-					console.error(e.message);
+					console.error(chalk.redBright(e.message));
 					process.exit(2);
 				}
 				throw e;
 			}
 		} else {
-			console.error(`Unknown command: ${cmd.name}`);
+			console.error(chalk`{redBright Unknown command:} ${cmd.name}`);
 			process.exit(1);
 		}
 		cmd = commandLineArgs(cmdDefinitions, { argv, stopAtFirstUnknown: true });
