@@ -174,16 +174,50 @@ export default class Game_Cosmo extends Game
 			attr.value = newName;
 		};
 
+		// Find a file in this episode's .vol archive.
+		function getFileVOL(filename) {
+			const fileUpper = filename.toUpperCase();
+			const file = epData.vol.files.find(f => f.name.toUpperCase() === fileUpper);
+			if (!file) {
+				const volFilename = epData.exe.attributes['filename.archive.episode'].value;
+				throw new Error(`Unable to find "${filename}" in the VOL archive "${volFilename}".`);
+			}
+
+			return file;
+		}
+
 		// Extract all the "filename.music.*" attributes and populate them as a
 		// list of songs.
 		let songs = {};
 		attributesToItems(epData.exe.attributes, 'filename.music.', (index, attr) => {
 			const filename = attr.value;
+			const fnExtract = () => getFileVOL(filename).getContent();
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
 			songs[`music.${index}`] = {
 				title: `Song ${index}`,
 				subtitle: filename,
 				type: Game.ItemTypes.Music,
-				fnOpen: () => this.openMusic(filename),
+				fnExtract: fnExtract,
+				fnReplace: fnReplace,
+				fnOpen: () => {
+					const content = {
+						main: fnExtract(),
+					};
+					return mus_imf_idsoftware_type0.parse(content);
+				},
+				fnPresaveCheck: obj => mus_imf_idsoftware_type0.checkLimits(obj),
+				fnSave: obj => {
+					// Convert the Music instance back into binary file data.
+					const { warnings, content } = mus_imf_idsoftware_type0.generate(obj);
+					fnReplace(content.main);
+					return warnings;
+				},
 				fnRename: newName => rename(attr, newName),
 			};
 		});
