@@ -191,7 +191,11 @@ export default class Game_Cosmo extends Game
 		let songs = {};
 		attributesToItems(epData.exe.attributes, 'filename.music.', (index, attr) => {
 			const filename = attr.value;
+
+			// Function to extract the raw song file.
 			const fnExtract = () => getFileVOL(filename).getContent();
+
+			// Function to overwrite the song file.
 			const fnReplace = content => {
 				// Replace getContent() with a function that returns the new content.
 				let file = getFileVOL(filename);
@@ -199,25 +203,37 @@ export default class Game_Cosmo extends Game
 				file.nativeSize = content.length;
 				file.diskSize = undefined; // don't know until written
 			};
+
+			// Add the song to the list of items.
 			songs[`music.${index}`] = {
 				title: `Song ${index}`,
 				subtitle: filename,
 				type: Game.ItemTypes.Music,
 				fnExtract: fnExtract,
 				fnReplace: fnReplace,
+
+				// Function to open the file and return a Music instance.
 				fnOpen: () => {
 					const content = {
 						main: fnExtract(),
 					};
 					return mus_imf_idsoftware_type0.parse(content);
 				},
+
+				// Function to check the Music instance is ok to save.
 				fnPresaveCheck: obj => mus_imf_idsoftware_type0.checkLimits(obj),
+
+				// Function to convert the Music instance back into binary data and
+				// overwrite the file.
 				fnSave: obj => {
 					// Convert the Music instance back into binary file data.
 					const { warnings, content } = mus_imf_idsoftware_type0.generate(obj);
 					fnReplace(content.main);
 					return warnings;
 				},
+
+				// Function to rename the file inside the .vol and update the .exe to
+				// refer to the new name.
 				fnRename: newName => rename(attr, newName),
 			};
 		});

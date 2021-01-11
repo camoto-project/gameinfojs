@@ -77,12 +77,11 @@ You're ready to go!  To add a new game:
     gamearchive.js, the levels by gamemaps.js, the images by gamegraphics.js,
     and so on.
     
- 2. Create a new file in the `formats/` folder for your game.  Copying an
+ 2. Create a new file in the `games/` folder for your game.  Copying an
     existing file that covers a similar game will help considerably.
     
- 3. Edit the main `index.js` and add an `import` statement for your new file,
-    as well as adding it to the array of games.
-    
+ 3. Edit `games/index.js` and add an `import` statement for your new file.
+
 During development you can test your code like this:
 
     # Read a sample archive and list the files, with debug messages on
