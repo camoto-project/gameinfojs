@@ -76,7 +76,7 @@ class Operations
 			throw new OperationsError(`export: this item does not support being opened.`);
 		}
 		if (!params.format) {
-			throw new OperationsError(`export: must specify an output format with -f.`);
+			throw new OperationsError(`export: must specify an output format with -t.`);
 		}
 		if (!params.target) {
 			throw new OperationsError(`export: must specify an output filename.`);
@@ -227,7 +227,7 @@ class Operations
 					const m = h.metadata();
 					console.error(` * ${m.id} (${m.title})`);
 				});
-				throw new OperationsError('open: please use the -f option to specify the format.');
+				throw new OperationsError('open: please use the -t option to specify the format.');
 			}
 			handler = handlers[0];
 		}
@@ -324,7 +324,7 @@ class Operations
 Operations.names = {
 	check: [],
 	export: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'target', defaultOption: true },
 	],
 	extract: [
@@ -333,7 +333,7 @@ Operations.names = {
 	info: [],
 	list: [],
 	open: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'target', defaultOption: true },
 	],
 	rename: [
@@ -408,8 +408,8 @@ Commands:
   list | ls | dir
     Show all items in the currently opened game.
 
-  open [-f format] <folder>
-    Open the local <folder> as a game, autodetecting the game unless -f is
+  open [-t format] <folder>
+    Open the local <folder> as a game, autodetecting the game unless -t is
     given.  Use --formats for a list of possible values.
 
   save [-f]
@@ -424,7 +424,7 @@ Selection commands:
 
   These commands work on the item previously chosen with the 'select' command.
 
-  export -f format <file>
+  export -t format <file>
     Export (convert) the selected item to a file in the given format.  Not all
     items can be exported in this manner, but many can.
 
