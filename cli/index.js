@@ -24,6 +24,7 @@ import {
 	Image,
 	Palette,
 	all as gamegraphicsFormats,
+	findHandler as gamegraphicsFindHandler,
 } from '@camoto/gamegraphics';
 import {
 	Music,
@@ -40,6 +41,54 @@ import {
 } from '../index.js';
 
 class OperationsError extends Error {
+}
+
+// Open a file via gamegraphicsjs and return an Image/Palette instance.
+function gamegraphicsOpen(target, format)
+{
+	let handler;
+	if (format) {
+		handler = gamegraphicsFormats.find(h => h.metadata().id === format);
+		if (!handler) {
+			throw new OperationsError(`Invalid gamegraphicsjs format code: ${format}.`);
+		}
+	}
+
+	let content = {
+		main: fs.readFileSync(target),
+	};
+	if (!handler) {
+		let handlers = gamegraphicsFindHandler(content.main, target);
+		if (handlers.length === 0) {
+			throw new Error('unable to identify this file format.');
+		}
+		if (handlers.length > 1) {
+			console.error('This file format could not be unambiguously identified.  It could be:');
+			handlers.forEach(h => {
+				const m = h.metadata();
+				console.error(` * ${m.id} (${m.title})`);
+			});
+			throw new Error('please use the -t option to specify the format.');
+		}
+		handler = handlers[0];
+	}
+
+	const suppList = handler.supps(target, content.main);
+	if (suppList) {
+		for (const [id, suppFilename] of Object.entries(suppList)) {
+			debug(`Reading supp "${id}" from: ${suppFilename}`);
+			try {
+				content[id] = fs.readFileSync(suppFilename);
+				content[id].filename = suppFilename;
+			} catch (e) {
+				throw new Error(`unable to open supplementary file `
+					+ `"${suppFilename}": ${e.message}`);
+			}
+		}
+	}
+
+	const options = {};
+	return handler.read(content, options);
 }
 
 class Operations
@@ -199,6 +248,29 @@ class Operations
 
 		const content = this.item.fnExtract();
 		await fs.promises.writeFile(params.target, content);
+	}
+
+	async import(params) {
+		if (!this.item) {
+			throw new OperationsError(`import: must 'select' an item first.`);
+		}
+		if (!this.item.fnSave) {
+			throw new OperationsError(`import: this item does not support being saved.`);
+		}
+		if (!params.target) {
+			throw new OperationsError(`import: must specify an input filename.`);
+		}
+
+		switch (this.item.type) {
+			case Game.ItemTypes.Image: // gamegraphics Image
+				this.item.fnSave(
+					gamegraphicsOpen(params.target, params.format)
+				);
+				break;
+			default:
+				throw new OperationsError(`import: importing items of type `
+					+ `"${this.item.type}" is not yet supported.`);
+		}
 	}
 
 	async info() {
@@ -400,6 +472,10 @@ Operations.names = {
 	extract: [
 		{ name: 'target', defaultOption: true },
 	],
+	import: [
+		{ name: 'format', alias: 't' },
+		{ name: 'target', defaultOption: true },
+	],
 	info: [],
 	list: [],
 	open: [
@@ -496,13 +572,22 @@ Selection commands:
 
   export -t format <file>
     Export (convert) the selected item to a file in the given format.  Not all
-    items can be exported in this manner, but many can.
+    items can be exported in this manner, but many can.  Counterpart to
+    'import'.
 
   extract <file>
     Copy the selected item into <file> in the current directory, without
     changing or converting it, apart from decompressing or decrypting it if the
     game had done so.  Not all items can be extracted, typically only those
     items that translate to a single underlying file.  Counterpart to 'replace'.
+
+  import [-t format] <file>
+    Open <file> as the given format (or try to autodetect if omitted) and
+    convert the file into the game's native format, overwriting the last
+    selected item.  Unlike 'replace' which only handles raw data, 'import' will
+    read any supported format and convert it if possible to the required
+    format.  Not all items can be replaced by importing, and of those that can,
+    not all formats can be converted automatically.  Counterpart to 'export'.
 
   info
     Display technical information about the selected item.
@@ -517,7 +602,7 @@ Selection commands:
     Open <file> from the current directory and use it to overwrite the selected
     item.  No format conversions are performed, although the content may be
     compressed or encrypted if the underlying game requires it.  As with the
-    counterpart 'export', not everything can be replaced.
+    counterpart 'extract', not everything can be replaced.
 
 Examples:
 
