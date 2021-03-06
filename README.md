@@ -34,8 +34,15 @@ examples:
     # given folder.
     gameinfo open /dos/games/cosmo list
     
-    # Rename an element and save changes.
-    gameinfo open /dos/games/cosmo rename -n newfile.mni music.19 save
+    # Rename an element and save changes.  This changes the filename inside
+    # COSMO1.VOL as well as patching COSMO1.EXE to use the new name.
+    gameinfo open /dos/games/cosmo select music.19 rename newfile.mni save
+    
+    # Extract the title screen and save as a PNG image.
+    gameinfo open /dos/games/cosmo select splash.title export -t img-png title.png
+    
+    # Load the PNG image again and use it to replace the title screen.
+    gameinfo open /dos/games/cosmo select splash.title import title.png save
 
 To get a list of supported games, run:
 
