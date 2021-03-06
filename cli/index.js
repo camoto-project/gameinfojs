@@ -438,7 +438,10 @@ Selection commands:
     Display technical information about the selected item.
 
   rename <new>
-    Rename any underlying file to <new>.
+    Rename any underlying file to <new>.  If supported, this renames the file
+    everywhere, including inside any archive and where it is referenced in the
+    game executable, so the game will usually work unchanged after this
+    operation.
 
   replace <file>
     Open <file> from the current directory and use it to overwrite the selected
