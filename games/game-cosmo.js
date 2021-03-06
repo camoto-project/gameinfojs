@@ -249,6 +249,7 @@ export default class Game_Cosmo extends Game
 				subtitle: filename,
 				type: Game.ItemTypes.Map,
 				fnOpen: () => this.openMap(filename),
+				fnRename: newName => rename(attr, newName),
 			};
 		});
 
@@ -264,6 +265,7 @@ export default class Game_Cosmo extends Game
 				subtitle: filename,
 				type: Game.ItemTypes.B800,
 				fnOpen: () => this.openB800(filename),
+				fnRename: newName => rename(attr, newName),
 			};
 		});
 
@@ -275,6 +277,7 @@ export default class Game_Cosmo extends Game
 				subtitle: filename,
 				type: Game.ItemTypes.Image,
 				fnOpen: () => this.openBackdrop(filename),
+				fnRename: newName => rename(attr, newName),
 			};
 		});
 
@@ -286,6 +289,7 @@ export default class Game_Cosmo extends Game
 				subtitle: filename,
 				type: Game.ItemTypes.Sound,
 				fnOpen: () => this.openSounds(filename),
+				fnRename: newName => rename(attr, newName),
 			};
 		});
 
