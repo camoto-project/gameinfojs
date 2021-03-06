@@ -22,7 +22,6 @@ import commandLineArgs from 'command-line-args';
 import fs from 'fs';
 import {
 	Image,
-	Palette,
 	all as gamegraphicsFormats,
 	findHandler as gamegraphicsFindHandler,
 } from '@camoto/gamegraphics';
@@ -261,15 +260,24 @@ class Operations
 			throw new OperationsError(`import: must specify an input filename.`);
 		}
 
+		let result;
 		switch (this.item.type) {
 			case Game.ItemTypes.Image: // gamegraphics Image
-				this.item.fnSave(
+				result = this.item.fnSave(
 					gamegraphicsOpen(params.target, params.format)
 				);
 				break;
 			default:
 				throw new OperationsError(`import: importing items of type `
 					+ `"${this.item.type}" is not yet supported.`);
+		}
+
+		if (result.warnings.length) {
+			console.log('There were warnings generated while saving:\n');
+			for (let i in result.warnings) {
+				console.log(((i >>> 0) + 1).toString().padStart(2) + '. '
+					+ result.warnings[i]);
+			}
 		}
 	}
 

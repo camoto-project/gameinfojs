@@ -358,13 +358,11 @@ export default class Game_Cosmo extends Game
 						width: 320,
 						height: 200,
 					});
-					if (outContent.warnings.length) {
-						console.log('There were warnings generated while saving:\n');
-						for (let i in warnings) {
-							console.log(((i >>> 0) + 1).toString().padStart(2) + '. ' + warnings[i]);
-						}
-					}
 					fnReplace(outContent.content.main);
+
+					return {
+						warnings: outContent.warnings,
+					};
 				},
 
 				fnRename: newName => rename(attr, newName),
