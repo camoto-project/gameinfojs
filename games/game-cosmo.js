@@ -175,13 +175,16 @@ export default class Game_Cosmo extends Game
 			attr.value = newName;
 		};
 
-		// Find a file in this episode's .vol archive.
+		// Find a file in this episode's .vol or .stn archives.
 		function getFileVOL(filename) {
 			const fileUpper = filename.toUpperCase();
-			const file = epData.vol.files.find(f => f.name.toUpperCase() === fileUpper);
+			let file = epData.vol.files.find(f => f.name.toUpperCase() === fileUpper);
 			if (!file) {
-				const volFilename = epData.exe.attributes['filename.archive.episode'].value;
-				throw new Error(`Unable to find "${filename}" in the VOL archive "${volFilename}".`);
+				file = epData.stn.files.find(f => f.name.toUpperCase() === fileUpper);
+				if (!file) {
+					throw new Error(`Unable to find "${filename}" in the VOL or STN `
+						+ `archives "${epData.volFilename}" or "${epData.stnFilename}".`);
+				}
 			}
 
 			return file;
