@@ -105,7 +105,7 @@ export default class Game
 	async save() {
 		throw new Error('BUG: Descendent class has not implemented this function!');
 	}
-};
+}
 
 // Standard item types used for building the tree of editable game items.  These
 // roughly translate to one type per editor.

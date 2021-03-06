@@ -1,5 +1,5 @@
-/**
- * @file Information about Cosmo's Cosmic Adventure.
+/*
+ * Information about Cosmo's Cosmic Adventure.
  *
  * This game is documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Cosmo%27s_Cosmic_Adventure
@@ -379,7 +379,6 @@ export default class Game_Cosmo extends Game
 
 	async save() {
 		for (let epIndex = 0; epIndex < this.episodes.length; epIndex++) {
-			let epNumber = epIndex + 1;
 			const epData = this.episodes[epIndex];
 
 			// Write out the .VOL archive.
@@ -397,4 +396,4 @@ export default class Game_Cosmo extends Game
 			await this.filesystem.write(epData.exeFilename, outputExe.main);
 		}
 	}
-};
+}

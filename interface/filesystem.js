@@ -77,4 +77,4 @@ export default class Filesystem
 		debug(`Renaming ${oldName} to ${newName}`);
 		return await fs.promises.rename(oldName, newName);
 	}
-};
+}

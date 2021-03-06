@@ -81,4 +81,4 @@ export function findHandler(filesystem) {
 		}
 	}
 	return handlers;
-};
+}
