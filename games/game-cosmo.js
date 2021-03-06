@@ -353,6 +353,19 @@ export default class Game_Cosmo extends Game
 						height: 200,
 					});
 				},
+				fnSave: (content) => {
+					const outContent = img_raw_planar_4bpp.write(content, {
+						width: 320,
+						height: 200,
+					});
+					if (outContent.warnings.length) {
+						console.log('There were warnings generated while saving:\n');
+						for (let i in warnings) {
+							console.log(((i >>> 0) + 1).toString().padStart(2) + '. ' + warnings[i]);
+						}
+					}
+					fnReplace(outContent.content.main);
+				},
 
 				fnRename: newName => rename(attr, newName),
 			};
