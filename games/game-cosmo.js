@@ -272,10 +272,25 @@ export default class Game_Cosmo extends Game
 		let backdrops = {};
 		attributesToItems(epData.exe.attributes, 'filename.backdrop.', (index, attr) => {
 			const filename = attr.value;
+
+			// Function to extract the raw file.
+			const fnExtract = () => getFileVOL(filename).getContent();
+
+			// Function to overwrite the file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
 			backdrops[`backdrop.${index}`] = {
 				title: `Backdrop ${index}`,
 				subtitle: filename,
 				type: Game.ItemTypes.Image,
+				fnExtract,
+				fnReplace,
 				fnOpen: () => this.openBackdrop(filename),
 				fnRename: newName => rename(attr, newName),
 			};
