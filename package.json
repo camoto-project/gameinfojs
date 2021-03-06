@@ -30,6 +30,7 @@
   "dependencies": {
     "@camoto/gamearchive": "^3.0.1",
     "@camoto/gamecode": "^1.0.1",
+    "@camoto/gamegraphics": "^1.0.1",
     "@camoto/gamemusic": "^2.0.2",
     "debug": "^4.3.1"
   },
