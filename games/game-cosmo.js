@@ -110,19 +110,19 @@ export default class Game_Cosmo extends Game
 					+ `while reading ${epData.exeFilename}: ${e.message}`);
 			}
 
-			const volFilename = epData.exe.attributes['filename.archive.episode'].value;
+			epData.volFilename = epData.exe.attributes['filename.archive.episode'].value;
 			let content_vol = {
-				main: await this.filesystem.read(volFilename),
+				main: await this.filesystem.read(epData.volFilename),
 			};
 			epData.vol = arc_vol_cosmo.parse(content_vol);
-			debug(`Read ${epData.vol.files.length} files from ${volFilename}`);
+			debug(`Read ${epData.vol.files.length} files from ${epData.volFilename}`);
 
-			const stnFilename = epData.exe.attributes['filename.archive.standard'].value;
+			epData.stnFilename = epData.exe.attributes['filename.archive.standard'].value;
 			let content_stn = {
-				main: await this.filesystem.read(stnFilename),
+				main: await this.filesystem.read(epData.stnFilename),
 			};
 			epData.stn = arc_vol_cosmo.parse(content_stn);
-			debug(`Read ${epData.stn.files.length} files from ${stnFilename}`);
+			debug(`Read ${epData.stn.files.length} files from ${epData.stnFilename}`);
 		}
 
 		return warnings;
