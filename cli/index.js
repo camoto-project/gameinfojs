@@ -21,6 +21,11 @@ import chalk from 'chalk';
 import commandLineArgs from 'command-line-args';
 import fs from 'fs';
 import {
+	Image,
+	Palette,
+	all as gamegraphicsFormats,
+} from '@camoto/gamegraphics';
+import {
 	Music,
 	Patch,
 	all as gamemusicFormats,
@@ -111,6 +116,50 @@ class Operations
 			} catch (e) {
 				debug(e);
 				throw new OperationsError(`export: MusicHandler.generate() failed - ${e.message}`);
+			}
+
+			let promises = [];
+			const suppList = handler.supps(params.target, content.main);
+			if (suppList) Object.keys(suppList).forEach(id => {
+				console.warn(' - Saving supplemental file', suppList[id]);
+				promises.push(
+					fs.promises.writeFile(suppList[id], content[id])
+				);
+			});
+			promises.push(fs.promises.writeFile(params.target, content.main));
+
+			if (warnings.length) {
+				console.log('There were warnings generated while saving:\n');
+				for (let i in warnings) {
+					console.log(((i >>> 0) + 1).toString().padStart(2) + '. ' + warnings[i]);
+				}
+			}
+
+			await Promise.all(promises);
+
+		} else if (doc instanceof Image) {
+			const handler = gamegraphicsFormats.find(h => h.metadata().id === params.format);
+			if (!handler) {
+				throw new OperationsError(`export: invalid graphics format '${params.format}'.`);
+			}
+
+			const problems = handler.checkLimits(doc);
+			if (problems.length) {
+				console.log('There are problems preventing the file from being saved:\n');
+				for (let i = 0; i < problems.length; i++) {
+					console.log((i + 1).toString().padStart(2) + ': ' + problems[i]);
+				}
+				console.log('\nPlease correct these issues and try again.\n');
+				throw new OperationsError(`export: unable to export as `
+					+ `'${params.format}' due to file format limitations.`);
+			}
+
+			let content, warnings;
+			try {
+				({ content, warnings } = handler.write(doc));
+			} catch (e) {
+				debug(e);
+				throw new OperationsError(`export: ImageHandler.generate() failed - ${e.message}`);
 			}
 
 			let promises = [];
