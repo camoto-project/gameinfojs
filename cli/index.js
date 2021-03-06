@@ -230,6 +230,27 @@ class Operations
 				process.stdout.write(chalk` ${type}:{greenBright ${count}}`);
 			}
 			process.stdout.write('\n');
+
+		} else if (doc instanceof Image) {
+			process.stdout.write(`Document type: Image\n`);
+			process.stdout.write(`Dimensions: ${doc.dims.x} x ${doc.dims.y}\n`);
+
+			process.stdout.write(`Palette size: `);
+			if (doc.palette) {
+				process.stdout.write(doc.palette.length.toString());
+			} else {
+				process.stdout.write(`N/A`);
+			}
+			process.stdout.write(`\n`);
+
+			process.stdout.write(`Hotspot: `);
+			if (doc.hotspot && (doc.hotspot.x !== undefined)) {
+				process.stdout.write(`(${doc.hotspot.x}, ${doc.hotspot.y})`);
+			} else {
+				process.stdout.write(`None`);
+			}
+			process.stdout.write(`\n`);
+
 		} else {
 			process.stdout.write(`Document type: Unknown\n`);
 		}
