@@ -30,6 +30,7 @@ import GameCodeDecompress from '@camoto/gamecode/util/decompress.js';
 import Game from '../interface/game.js';
 
 import { arc_vol_cosmo } from '@camoto/gamearchive';
+import { img_raw_planar_4bpp } from '@camoto/gamegraphics';
 import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
 
 function attributesToItems(attributes, prefix, cb)
@@ -308,6 +309,52 @@ export default class Game_Cosmo extends Game
 			};
 		});
 
+		let splash = {};
+		attributesToItems(epData.exe.attributes, 'filename.splash.', (index, attr) => {
+			const filename = attr.value;
+			const titles = {
+				'pretitle': 'Apogee logo',
+				'title': 'Title screen',
+				'credits': 'Credits',
+				'loading': 'Loading',
+				'bonus': 'Bonus level',
+				'end': 'Game finished',
+			};
+
+			// Function to extract the raw image file.
+			const fnExtract = () => getFileVOL(filename).getContent();
+
+			// Function to overwrite the file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
+			splash[`splash.${index}`] = {
+				title: titles[index] || index,
+				subtitle: filename,
+				type: Game.ItemTypes.Image,
+				fnExtract,
+				fnReplace,
+
+				// Function to open the file and return an Image instance.
+				fnOpen: () => {
+					const content = {
+						main: fnExtract(),
+					};
+					return img_raw_planar_4bpp.read(content, {
+						width: 320,
+						height: 200,
+					});
+				},
+
+				fnRename: newName => rename(attr, newName),
+			};
+		});
+
 		return {
 			'levels': {
 				title: 'Levels',
@@ -329,10 +376,15 @@ export default class Game_Cosmo extends Game
 				type: Game.ItemTypes.Folder,
 				children: sounds,
 			},
-			'textSplash': {
+			'b800': {
 				title: 'Text-mode splash screens',
 				type: Game.ItemTypes.Folder,
 				children: b800,
+			},
+			'splash': {
+				title: 'Graphics-mode splash screens',
+				type: Game.ItemTypes.Folder,
+				children: splash,
 			},
 			'misc': {
 				title: 'Misc',
