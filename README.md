@@ -46,7 +46,7 @@ examples:
 
 To get a list of supported games, run:
 
-    gamecode --formats
+    gameinfo --formats
 
 ## Installation as a dependency
 
@@ -71,11 +71,11 @@ See `cli/index.js` for example use.  The quick start is:
 If you would like to help add more file formats to the library, great!
 Clone the repo, and to get started:
 
-    npm install --dev
+    npm install
 
 Run the tests to make sure everything worked:
 
-    npm run -s test
+    npm test
 
 You're ready to go!  To add a new game:
 
@@ -91,5 +91,8 @@ You're ready to go!  To add a new game:
 
 During development you can test your code like this:
 
-    # Read a sample archive and list the files, with debug messages on
-    $ DEBUG='game*' ./bin/gameinfo open /path/to/game list
+    # Open a sample game and list the files, with debug messages on.
+    $ DEBUG='game*' ./bin/gameinfo.js open /path/to/game list
+
+    # Run the unit tests to ensure code passes the lint checks.
+    $ DEBUG='gameinfo:*' npm test
