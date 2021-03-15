@@ -62,12 +62,12 @@ export const all = [
  *   console.log('Game is in ' + md.id + ' format');
  * }
  */
-export function findHandler(filesystem) {
+export async function findHandler(filesystem) {
 	let handlers = [];
 	for (const x of all) {
 		const metadata = x.metadata();
 		debug(`Trying format handler ${metadata.id} (${metadata.title})`);
-		const confidence = x.identify(filesystem);
+		const confidence = await x.identify(filesystem);
 		if (confidence.valid === true) {
 			debug(`Matched ${metadata.id}: ${confidence.reason}`);
 			handlers = [x];

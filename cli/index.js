@@ -367,7 +367,7 @@ class Operations
 
 		let gameFolder = new Filesystem(params.target);
 		if (!handler) {
-			let handlers = gameinfoFindHandler(gameFolder);
+			let handlers = await gameinfoFindHandler(gameFolder);
 			if (handlers.length === 0) {
 				throw new OperationsError('Unable to identify this game.');
 			}
