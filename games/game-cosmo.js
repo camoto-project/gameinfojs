@@ -25,13 +25,13 @@ const FORMAT_ID = 'game-cosmo';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import GameCode_exe_cosmo1 from '@camoto/gamecode/formats/exe-cosmo1.js';
-import GameCodeDecompress from '@camoto/gamecode/util/decompress.js';
-import Game from '../interface/game.js';
-
+import { exe_cosmo1 } from '@camoto/gamecode';
+import { decompressEXE } from '@camoto/gamecode';
 import { arc_vol_cosmo } from '@camoto/gamearchive';
 import { img_raw_planar_4bpp } from '@camoto/gamegraphics';
 import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
+
+import Game from '../interface/game.js';
 
 function attributesToItems(attributes, prefix, cb)
 {
@@ -81,13 +81,13 @@ export default class Game_Cosmo extends Game
 		let warnings = [];
 		this.episodes = [
 			{
-				handler: GameCode_exe_cosmo1,
+				handler: exe_cosmo1,
 			},
 		];
 		const handlers = [
-			GameCode_exe_cosmo1,
-			//GameCode_exe_cosmo2,
-			//GameCode_exe_cosmo3,
+			exe_cosmo1,
+			//exe_cosmo2,
+			//exe_cosmo3,
 		];
 		for (let epIndex = 0; epIndex < handlers.length; epIndex++) {
 			let epNumber = epIndex + 1;
@@ -96,7 +96,7 @@ export default class Game_Cosmo extends Game
 			epData.exeFilename = `cosmo${epNumber}.exe`;
 			try {
 				epData.exeContent = {
-					main: GameCodeDecompress(await this.filesystem.read(epData.exeFilename)),
+					main: decompressEXE(await this.filesystem.read(epData.exeFilename)),
 				};
 				const identified = epData.handler.identify(epData.exeContent.main);
 				if (!identified.valid) {
@@ -109,6 +109,7 @@ export default class Game_Cosmo extends Game
 				debug(e);
 				warnings.push(`Episode ${epNumber} is unavailable due to an error `
 					+ `while reading ${epData.exeFilename}: ${e.message}`);
+				continue;
 			}
 
 			epData.volFilename = epData.exe.attributes['filename.archive.episode'].value;
