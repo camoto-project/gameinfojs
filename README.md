@@ -1,5 +1,5 @@
 # gameinfo.js
-Copyright 2010-2020 Adam Nielsen <<malvineous@shikadi.net>>  
+Copyright 2010-2021 Adam Nielsen <<malvineous@shikadi.net>>  
 
 This is a Javascript library that ties together the other Camoto Javascript
 libraries to provide a single unified interface to supported games.  With this
@@ -21,7 +21,8 @@ with games directly.  To install it globally on your system:
 
 The library currently supports these games:
 
- * Cosmo's Cosmic Adventure (episode 1)
+ * Cosmo's Cosmic Adventure (episode 1) [incomplete]
+ * Dangerous Dave [incomplete]
 
 ### Command line interface
 

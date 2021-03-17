@@ -101,6 +101,8 @@ export default class Game
 
 	/**
 	 * Save any changed items back to the game's data files.
+	 *
+	 * @return {Array<string>} Zero or more warnings as user-friendly strings.
 	 */
 	async save() {
 		throw new Error('BUG: Descendent class has not implemented this function!');
