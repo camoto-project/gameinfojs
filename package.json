@@ -1,6 +1,6 @@
 {
   "name": "@camoto/gameinfo",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Generic interface for modifying supported DOS games",
   "bin": {
     "gameinfo": "./bin/gameinfo.js"
