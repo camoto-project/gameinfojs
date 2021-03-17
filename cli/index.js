@@ -185,7 +185,7 @@ class Operations
 
 			await Promise.all(promises);
 
-		} else if (doc instanceof Image) {
+		} else if ((doc instanceof Image) || (doc[0] instanceof Image)) {
 			const handler = gamegraphicsFormats.find(h => h.metadata().id === params.format);
 			if (!handler) {
 				throw new OperationsError(`export: invalid graphics format '${params.format}'.`);
