@@ -84,6 +84,29 @@ export default class Game
 
 	/**
 	 * Get a list of items that can be viewed or edited.
+	 *
+	 * title: Name to display to user when selecting the item.
+	 *
+	 * subtitle: Less prominent name, usually used for underlying filename if
+	 *   present.
+	 *
+	 * type: `Game.ItemTypes` option, used to show icon for the content type and
+	 *   to control which type of editor is used to view the item.
+	 *
+	 * fnExtract: Optional function to extract the underlying file.
+	 *
+	 * fnReplace: Replace data extracted with fnExtract, mandatory if fnExtract
+	 *   is supplied.
+	 *
+	 * fnOpen: Mandatory function to turn the item into an object instance the
+	 *   editor can access.
+	 *
+	 * fnSave: Mandatory function to save the object instance back to the game
+	 *   data.  Note that this does not update the game files until `Game.save()`
+	 *   is called.
+	 *
+	 * disabled: `true` if the user is not permitted to open the item, `false` or
+	 *   `undefined` if it can be opened.
 	 */
 	async items() {
 		throw new Error('BUG: Descendent class has not implemented this function!');
