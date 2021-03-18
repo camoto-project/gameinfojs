@@ -344,7 +344,8 @@ class Operations
 			for (const i of Object.keys(items)) {
 				const item = items[i];
 				let subtitle = item.subtitle ? chalk` | {blueBright ${item.subtitle}}` : '';
-				console.log('  '.repeat(depth) + chalk`* [{whiteBright ${i}}]: {yellowBright ${item.title}}${subtitle} {grey (${item.type})}`);
+				const disabled = item.disabled ? chalk` {redBright DISABLED}` : '';
+				console.log('  '.repeat(depth) + chalk`* [{whiteBright ${i}}]: {yellowBright ${item.title}}${subtitle} {grey (${item.type})}${disabled}`);
 				if (item.type === Game.ItemTypes.Folder) {
 					show(depth + 1, item.children);
 				}
