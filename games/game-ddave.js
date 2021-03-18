@@ -31,10 +31,18 @@ import {
 	imageFromTileset,
 	tilesetFromImage,
 	pal_vga_6bit,
+	tls_ddave_cga,
+	tls_ddave_ega,
 	tls_ddave_vga,
 } from '@camoto/gamegraphics';
 
 import Game from '../interface/game.js';
+
+const tilesetHandler = {
+	cga: tls_ddave_cga,
+	ega: tls_ddave_ega,
+	vga: tls_ddave_vga,
+};
 
 export default class Game_DDave extends Game
 {
@@ -94,59 +102,74 @@ export default class Game_DDave extends Game
 
 		this.tileset = {};
 
-		const fileGfxVGA = this.exe.files.find(f => f.name.toUpperCase() === 'VGADAVE.DAV');
-		if (fileGfxVGA) {
-			this.tileset.vga = tls_ddave_vga.read({
-				main: fileGfxVGA.getContent(),
-			});
+		for (const xga of Object.keys(tilesetHandler)) {
+			const filename = `${xga}dave.dav`;
+			if (xga === 'ega') {
+				// egadave.dav gets read from the filesystem.
+				let contentGfx;
+				try {
+					contentGfx = await this.filesystem.read(filename);
+				} catch (e) {
+					warnings.push(`Unable to find "${filename}", omitting EGA tiles.`);
+					continue;
+				}
+				try {
+					this.tileset[xga] = tilesetHandler[xga].read({
+						main: contentGfx,
+					});
+				} catch (e) {
+					warnings.push(`Unable to read EGA graphics: ${e.message}`);
+				}
+			} else {
+				// cgadave.dav and vgadave.dav get read from inside the .exe.
+				let fileGfx = this.exe.files.find(f => f.name.toLowerCase() === filename);
+				if (fileGfx) {
+					this.tileset[xga] = tilesetHandler[xga].read({
+						main: fileGfx.getContent(),
+					});
+
+					// Since we won't be opening the file again, we can override it now so
+					// that upon save it will convert the tileset back to the underlying
+					// file format.  This saves us from having to search for the file
+					// inside the .exe again during save while we already have it now.
+					fileGfx.getContent = () => {
+						const generated = tilesetHandler[xga].write(this.tileset[xga]);
+						this.saveWarnings = this.saveWarnings.concat(generated.warnings);
+						return generated.content.main;
+					};
+				} else {
+					warnings.push(`Unable to find "${filename}" inside dave.exe, `
+						+ `omitting ${xga.toUpperCase()} tiles.`);
+				}
+			}
 		}
-		// Since we won't be opening the file again, we can override it now so that
-		// upon save it will convert the tileset back to the underlying file format.
-		fileGfxVGA.getContent = () => {
-			const generated = tls_ddave_vga.write(this.tileset.vga);
-			this.saveWarnings = this.saveWarnings.concat(generated.warnings);
-			return generated.content.main;
-		};
 
 		const filePalVGA = this.exe.files.find(f => f.name.toUpperCase() === 'VGA.PAL');
 		this.palVGA = pal_vga_6bit.read({
 			main: filePalVGA.getContent(),
 		});
-		filePalVGA.getContent = () => {
-			const generated = pal_vga_6bit.write(this.palVGA);
-			this.saveWarnings = this.saveWarnings.concat(generated.warnings);
-			return generated.content.main;
-		};
 
 		return warnings;
 	}
 
 	async items() {
 
-		// Find a file in this episode's .vol or .stn archives.
-		function getFile(archive, filename) {
-			const fileUpper = filename.toUpperCase();
-			let file = this.exe.find(f => f.name.toUpperCase() === fileUpper);
-			if (!file) {
-				throw new Error(`Unable to find "${filename}" inside dave.exe.`);
-			}
-
-			return file;
-		}
-
-		// Same for the levels.
+		// Prepare the levels.
 		let levels = {};
 		for (let i = 1; i < 11; i++) {
 			const padLevel = i.toString().padStart(2, '0');
 			const filename = `level${padLevel}.dav`;
+			let file = this.exe.files.find(f => f.name.toLowerCase() === filename);
+			if (!file) {
+				throw new Error(`Unable to find "${filename}" inside dave.exe.`);
+			}
 
 			// Function to extract the raw file.
-			const fnExtract = () => getFile(filename).getContent();
+			const fnExtract = () => file.getContent();
 
 			// Function to overwrite the file.
 			const fnReplace = content => {
 				// Replace getContent() with a function that returns the new content.
-				let file = getFile(filename);
 				file.getContent = () => content;
 				file.diskSize = file.nativeSize = content.length;
 			};
@@ -161,29 +184,38 @@ export default class Game_DDave extends Game
 			};
 		}
 
+		const gfxSources = ['cga', 'ega', 'vga'];
 		let gfx = {};
-		{
-			gfx['tiles'] = {
-				title: `Map tiles (VGA)`,
+		for (const xga of gfxSources) {
+			let itmTiles = {
+				title: `Map tiles (${xga.toUpperCase()})`,
 				type: Game.ItemTypes.Image,
+			};
+			if (!this.tileset[xga]) {
+				// Tileset wasn't loaded, disable opening.
+				itmTiles.disabled = true;
+			} else {
 				// Function to open the file and return an Array<Image>.
-				fnOpen: () => {
+				itmTiles.fnOpen = () => {
 					// Extract the map tiles from the tileset and turn it into an image.
-					let imgTileset = imageFromTileset(this.tileset.vga.slice(0, 53), 4);
-					imgTileset.palette = this.palVGA[0].palette;
+					let imgTileset = imageFromTileset(this.tileset[xga].slice(0, 53), 4);
+					if (xga === 'vga') {
+						imgTileset.palette = this.palVGA[0].palette;
+					}
 					return [ imgTileset ];
-				},
-				fnSave: obj => {
+				};
+				itmTiles.fnSave = obj => {
 					// Convert the Image instance back into individual tiles and store
 					// them in the loaded tileset.
 					const tiles = tilesetFromImage(obj[0], {x: 16, y: 16}, 53, 0);
 					// Replace the first 53 tiles with the new list.
-					this.tileset.vga.splice(0, 53, ...tiles);
+					this.tileset[xga].splice(0, 53, ...tiles);
 					return {
 						warnings: [],
 					};
-				},
-			};
+				};
+			}
+			gfx[`tiles-${xga}`] = itmTiles;
 		}
 
 		return {
@@ -217,12 +249,39 @@ export default class Game_DDave extends Game
 		// goes to read the data for each file, everything will get converted then.
 
 		// Reset the array that all those functions will append to.
-		this.saveWarnings = [];
+		let warnings = [];
+
+		if (this.tileset.ega) {
+			const generated = tls_ddave_ega.write(this.tileset.ega);
+			await this.filesystem.write('egadave.dav', generated.content.main);
+			warnings = warnings.concat(generated.warnings);
+		}
+
+		// Update all the files inside the .exe archive.
+		for (const xga of ['cga', 'vga']) {
+			if (this.tileset[xga]) {
+				const filename = `${xga}dave.dav`;
+				let fileGfx = this.exe.files.find(f => f.name.toLowerCase() === filename);
+
+				fileGfx.getContent = () => {
+					const generated = tilesetHandler[xga].write(this.tileset[xga]);
+					warnings = warnings.concat(generated.warnings);
+					return generated.content.main;
+				};
+			}
+		}
+
+		const filePalVGA = this.exe.files.find(f => f.name.toLowerCase() === 'vga.pal');
+		filePalVGA.getContent = () => {
+			const generated = pal_vga_6bit.write(this.palVGA);
+			warnings = warnings.concat(generated.warnings);
+			return generated.content.main;
+		};
 
 		// Write out the .EXE file.
 		const outputExe = arc_fixed_ddave_exe.generate(this.exe);
 		await this.filesystem.write('dave.exe', outputExe.main);
 
-		return this.saveWarnings;
+		return warnings;
 	}
 }
