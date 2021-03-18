@@ -26,7 +26,7 @@ import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
 import { decompressEXE } from '@camoto/gamecode';
-import { arc_fixed_ddave_exe } from '@camoto/gamearchive';
+import { arc_exe_ddave } from '@camoto/gamearchive';
 import {
 	imageFromTileset,
 	tilesetFromImage,
@@ -84,7 +84,7 @@ export default class Game_DDave extends Game
 			const content_exe = {
 				main: decompressEXE(await this.filesystem.read(exeFilename)),
 			};
-			const identified = arc_fixed_ddave_exe.identify(content_exe.main);
+			const identified = arc_exe_ddave.identify(content_exe.main);
 			if (!identified.valid) {
 				debug(`identify() failed for ${exeFilename}: ${identified.reason}`);
 				warnings.push(`${exeFilename} could not be positively identified.  It `
@@ -93,7 +93,7 @@ export default class Game_DDave extends Game
 					+ `official, unmodified version of the game, please report it so we `
 					+ `can add support for it.`);
 			}
-			this.exe = arc_fixed_ddave_exe.parse(content_exe);
+			this.exe = arc_exe_ddave.parse(content_exe);
 			debug(`Read ${this.exe.files.length} files from ${exeFilename}`);
 		} catch (e) {
 			debug(e);
@@ -245,7 +245,7 @@ export default class Game_DDave extends Game
 
 	async save() {
 		// We don't need to convert this.tileset etc. because we've already
-		// overridden those functions inside open(), so when arc_fixed_ddave_exe
+		// overridden those functions inside open(), so when arc_exe_ddave
 		// goes to read the data for each file, everything will get converted then.
 
 		// Reset the array that all those functions will append to.
@@ -279,7 +279,7 @@ export default class Game_DDave extends Game
 		};
 
 		// Write out the .EXE file.
-		const outputExe = arc_fixed_ddave_exe.generate(this.exe);
+		const outputExe = arc_exe_ddave.generate(this.exe);
 		await this.filesystem.write('dave.exe', outputExe.main);
 
 		return warnings;
