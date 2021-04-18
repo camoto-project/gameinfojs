@@ -28,10 +28,10 @@ const debug = Debug.extend(FORMAT_ID);
 import { decompressEXE } from '@camoto/gamecode';
 import { arc_exe_ddave } from '@camoto/gamearchive';
 import {
-	imageFromTileset,
-	tilesetFromImage,
-	imageFromMask,
-	maskFromImage,
+	frameFromTileset,
+	tilesetFromFrame,
+	frameFromMask,
+	maskFromFrame,
 	pal_vga_6bit,
 	tls_ddave_cga,
 	tls_ddave_ega,
@@ -204,68 +204,73 @@ export default class Game_DDave extends Game
 				itmTiles.disabled = true;
 			} else if (count === 1) {
 				itmTiles.fnOpen = () => {
-					let imgTileset = this.tileset[xga][offset];
-					if (xga === 'vga') {
-						imgTileset.palette = this.palVGA[0].palette;
-					} else {
-						// Copy the default CGA/EGA palette.
-						imgTileset.palette = this.tileset[xga][0].palette;
+					// Extract this frame as a single image.
+					let imgSingle = this.tileset[xga].clone(offset, 1);
+					if (xga === 'vga') { // see VGA palette comment below
+						imgSingle.palette = this.palVGA.palette;
 					}
-					return [ imgTileset ];
+					return imgSingle;
 				};
 				itmTiles.fnSave = obj => {
-					this.tileset[xga].splice(offset, offset + count, obj[0]);
+					this.tileset[xga].frames.splice(offset, 1, obj.frames[0]);
 					return {
 						warnings: [],
 					};
 				};
 			} else {
-				// Function to open the file and return an Array<Image>.
+				// Function to open the file and return an Image.
 				itmTiles.fnOpen = () => {
-					let imgTileset;
+					let imgTiles = this.tileset[xga].clone(0, 0);
+					let imgSingle = this.tileset[xga].clone(0, 0);
+
+					// Apply the palette if required.  If we did it when we loaded the
+					// tileset then the above clone() would take care of it, but it means
+					// if the user replaced the palette it wouldn't get applied to the
+					// tileset until the game was reopened.  By applying it here we'll
+					// always use the most up-to-date palette.
+					if (xga === 'vga') {
+						imgSingle.palette = this.palVGA.palette;
+					}
+
 					if (masked) {
 						// These tiles are masked, so convert them into a single image with
 						// a transparent palette entry used instead of the mask.
 						const outputTiles = [];
 						let numImages = width;
-						const tiles = this.tileset[xga].slice(offset, offset + numImages);
-						const masks = this.tileset[xga].slice(offset + numImages, offset + numImages * 2);
+						const tiles = this.tileset[xga].frames.slice(offset, offset + numImages);
+						const masks = this.tileset[xga].frames.slice(offset + numImages, offset + numImages * 2);
 						const [ piMask, piTrans ] = palIndexTransparent[xga];
 						for (let i = 0; i < numImages; i++) {
 							outputTiles.push(
-								imageFromMask({
-									imgVisible: tiles[i],
-									imgMask: masks[i],
+								frameFromMask({
+									frVisible: tiles[i],
+									frMask: masks[i],
 									cb: (v, m) => (m === piMask) ? piTrans : v,
 								})
 							);
 						}
-						imgTileset = imageFromTileset(outputTiles, width);
-					} else {
-						// Extract the map tiles from the tileset and turn it into an image.
-						imgTileset = imageFromTileset(this.tileset[xga].slice(offset, offset + count), width);
-					}
+						imgTiles.frames = outputTiles;
 
-					if (xga === 'vga') {
-						imgTileset.palette = this.palVGA[0].palette;
-					} else {
-						// Copy the default CGA/EGA palette.
-						imgTileset.palette = this.tileset[xga][0].palette;
-					}
-
-					// Create a transparent entry in the palette.
-					if (masked) {
+						// Create a transparent entry in the palette.  The palette has
+						// already been cloned above so modifying it here is no problem.
 						if (xga === 'vga') {
-							imgTileset.palette = imgTileset.palette.clone();
-							imgTileset.palette[palIndexTransparent] = [0xFF, 0x00, 0xFF, 0x00];
+							// For VGA, pick an unused colour and make it transparent.
+							const c = palIndexTransparent[xga][1];
+							imgSingle.palette[c] = [0xFF, 0x00, 0xFF, 0x00];
 						} else {
 							// For CGA and EGA, add an extra palette entry for transparency.
-							imgTileset.palette = imgTileset.palette.clone();
-							imgTileset.palette.push([0xFF, 0x00, 0xFF, 0x00]);
+							imgSingle.palette.push([0xFF, 0x00, 0xFF, 0x00]);
 						}
+					} else {
+						// Extract the map tiles from the tileset and turn it into an image.
+						imgTiles.frames = this.tileset[xga].frames.slice(offset, offset + count);
 					}
+					imgSingle.frames = [
+						frameFromTileset(imgTiles, width)
+					];
 
-					return [ imgTileset ];
+
+					return imgSingle;
 				};
 				itmTiles.fnSave = obj => {
 					// Convert the Image instance back into individual tiles and store
@@ -273,12 +278,12 @@ export default class Game_DDave extends Game
 					let tiles;
 					if (masked) {
 						// Convert the transparent pixels back to a mask image.
-						const origTiles = this.tileset[xga].slice(offset, offset + width);
-						let inputTiles = tilesetFromImage(obj[0], origTiles, 0);
+						const origTiles = this.tileset[xga].frames.slice(offset, offset + width);
+						let inputTiles = tilesetFromFrame(obj.frames[0], origTiles, 0);
 						let clearTiles = [];
 						let masks = [];
 						for (let i = 0; i < width; i++) {
-							const { imgVisible, imgMask } = maskFromImage({
+							const { frVisible, frMask } = maskFromFrame({
 								img: inputTiles[i],
 								cb: p => {
 									const alpha = inputTiles[i].palette[p][3] === 0x00;
@@ -292,19 +297,17 @@ export default class Game_DDave extends Game
 									];
 								},
 							});
-							clearTiles.push(imgVisible);
-							masks.push(imgMask);
+							clearTiles.push(frVisible);
+							masks.push(frMask);
 						}
 						// Put all the visible tiles first, followed by all the masks.
 						tiles = [ ...clearTiles, ...masks ];
 					} else {
-						const origTiles = this.tileset[xga].slice(offset, offset + count);
-						tiles = tilesetFromImage(obj[0], origTiles, 0);
+						const origTiles = this.tileset[xga].frames.slice(offset, offset + count);
+						tiles = tilesetFromFrame(obj.frames[0], origTiles, 0);
 					}
 					// Replace a section of tiles within the tileset with the new list.
-					debug('before', this.tileset[xga].length, offset, count, tiles.length);
-					this.tileset[xga].splice(offset, count, ...tiles);
-					debug('after', this.tileset[xga].length);
+					this.tileset[xga].frames.splice(offset, count, ...tiles);
 					return {
 						warnings: [],
 					};
