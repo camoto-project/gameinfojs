@@ -28,7 +28,13 @@ const debug = Debug.extend(FORMAT_ID);
 import { exe_cosmo1 } from '@camoto/gamecode';
 import { decompressEXE } from '@camoto/gamecode';
 import { arc_vol_cosmo } from '@camoto/gamearchive';
-import { img_raw_planar_4bpp } from '@camoto/gamegraphics';
+import {
+	frameFromTileset,
+	tilesetFromFrame,
+	img_raw_planar_4bpp,
+	tls_cosmo,
+	Image,
+} from '@camoto/gamegraphics';
 import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
 
 import Game from '../interface/game.js';
@@ -41,6 +47,47 @@ function attributesToItems(attributes, prefix, cb)
 		const index = idAttr.substr(prefix.length); // chop off the prefix
 		cb(index, attributes[idAttr]);
 	}
+}
+
+// Open a tileset file and draw all the tiles in a grid on as a single image.
+function tilesToImage({ content, widthTiles }) {
+	const tiles = tls_cosmo.read({
+		main: content,
+	});
+	// Convert tiles into single frame.
+	let imgSingle = tiles.clone(0, 0);
+	imgSingle.frames = [
+		frameFromTileset(tiles, widthTiles),
+	];
+	imgSingle.width *= widthTiles;
+	imgSingle.height *= tiles.frames.length / widthTiles;
+
+	return imgSingle;
+}
+
+function imageToTiles({ newImage, pal }) {
+	const tileCount = newImage.width * newImage.height / (8 * 8);
+
+	// Prepare the list of sizes for each tile, but make them all the same.
+	let tileDims = new Array(tileCount);
+	tileDims.fill({
+		width: 8, height: 8,
+	});
+
+	const newTiles = new Image({
+		width: 8,
+		height: 8,
+		frames: tilesetFromFrame({
+			frame: newImage.frames[0],
+			frameWidth: newImage.width,
+			frameHeight: newImage.height,
+			tileDims,
+			bg: 0,
+		}),
+		palette: pal,
+	});
+
+	return tls_cosmo.write(newTiles);
 }
 
 export default class Game_Cosmo extends Game
@@ -296,7 +343,20 @@ export default class Game_Cosmo extends Game
 				type: Game.ItemTypes.Image,
 				fnExtract,
 				fnReplace,
-				fnOpen: () => this.openBackdrop(filename),
+				fnOpen: () => tilesToImage({
+					content: fnExtract(),
+					widthTiles: 40,
+				}),
+				fnSave: (newImage) => {
+					const { warnings, content } = imageToTiles({
+						newImage,
+						pal: newImage.palette, // TODO: Use game palette, defaulting to EGA
+					});
+					fnReplace(content.main);
+					return {
+						warnings,
+					};
+				},
 				fnRename: newName => rename(attr, newName),
 			};
 		});
