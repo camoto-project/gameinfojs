@@ -123,9 +123,15 @@ export default class Game
 	}
 
 	/**
-	 * Save any changed items back to the game's data files.
+	 * Re-generate all game data files ready for writing to the filesystem.
 	 *
-	 * @return {Array<string>} Zero or more warnings as user-friendly strings.
+	 * @return Object with the following properties.
+	 *   - `files` is a key/value array with the key as the filename and the value
+	 *     as a Uint8Array with the content to write to that file.
+	 *   - `warnings` is an array of strings to present to the user as a list of
+	 *     potential issues or problems encountered while applying the changes,
+	 *     such as incompatible image palettes or saved-game filename extensions
+	 *     not being changed and conflicting with the original game.
 	 */
 	async save() {
 		throw new Error('BUG: Descendent class has not implemented this function!');

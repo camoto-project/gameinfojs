@@ -385,16 +385,16 @@ export default class Game_DDave extends Game
 	}
 
 	async save() {
+		let files = {};
+		let warnings = [];
+
 		// We don't need to convert this.tileset etc. because we've already
 		// overridden those functions inside open(), so when arc_exe_ddave
 		// goes to read the data for each file, everything will get converted then.
 
-		// Reset the array that all those functions will append to.
-		let warnings = [];
-
 		if (this.tileset.ega) {
 			const generated = tls_ddave_ega.write(this.tileset.ega);
-			await this.filesystem.write('egadave.dav', generated.content.main);
+			files['egadave.dav'] = generated.content.main;
 			warnings = warnings.concat(generated.warnings);
 		}
 
@@ -421,8 +421,11 @@ export default class Game_DDave extends Game
 
 		// Write out the .EXE file.
 		const outputExe = arc_exe_ddave.generate(this.exe);
-		await this.filesystem.write('dave.exe', outputExe.main);
+		files['dave.exe'] = outputExe.main;
 
-		return warnings;
+		return {
+			files,
+			warnings,
+		};
 	}
 }

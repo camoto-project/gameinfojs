@@ -20,6 +20,7 @@
 import chalk from 'chalk';
 import commandLineArgs from 'command-line-args';
 import fs from 'fs';
+import path from 'path';
 import {
 	Image,
 	all as gamegraphicsFormats,
@@ -93,6 +94,7 @@ function gamegraphicsOpen(target, format)
 class Operations
 {
 	constructor() {
+		this.gamePath = null;
 	}
 
 	async check() {
@@ -366,7 +368,8 @@ class Operations
 			throw new OperationsError('open: missing path');
 		}
 
-		let gameFolder = new Filesystem(params.target);
+		this.gamePath = params.target;
+		let gameFolder = new Filesystem(this.gamePath);
 		if (!handler) {
 			let handlers = await gameinfoFindHandler(gameFolder);
 			if (handlers.length === 0) {
@@ -442,12 +445,34 @@ class Operations
 				throw new OperationsError('save: fix the warnings and try again.');
 			}
 		}
+
+		let output;
 		try {
-			await this.game.save();
+			output = await this.game.save();
 		} catch (e) {
 			debug(e);
 			throw new OperationsError(`save: ${e.message}`);
 		}
+
+		const { files, warnings } = output;
+
+		if (warnings.length) {
+			console.error('There were warnings saving this game:');
+			for (const warning of warnings) {
+				console.error(` * ${warning}`);
+			}
+		}
+
+		let promises = [];
+		for (const [ filename, content ] of Object.entries(files)) {
+			const targetFilename = path.join(this.gamePath, filename.toLowerCase());
+			console.log(`Writing ${targetFilename}`);
+			promises.push(
+				fs.promises.writeFile(targetFilename, content)
+			);
+		}
+
+		return await Promise.all(promises);
 	}
 
 	async select(params) {

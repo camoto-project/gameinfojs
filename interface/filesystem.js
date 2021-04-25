@@ -62,17 +62,6 @@ export default class Filesystem
 		return content;
 	}
 
-	async write(filename, content) {
-		// Try to find the local file first, so on case-sensitive filesystems we
-		// will overwrite it instead of writing another file with a name that only
-		// differs in case.
-		const localFile = await this.findFile(filename)
-			|| path.join(this.rootPath, filename.toLowerCase());
-
-		debug(`Saving ${filename} as ${localFile}`);
-		return await fs.promises.writeFile(localFile, content);
-	}
-
 	async rename(newName, oldName) {
 		debug(`Renaming ${oldName} to ${newName}`);
 		return await fs.promises.rename(oldName, newName);

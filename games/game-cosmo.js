@@ -524,22 +524,31 @@ export default class Game_Cosmo extends Game
 	}
 
 	async save() {
+		let files = {};
+		let warnings = [];
+
 		for (let epIndex = 0; epIndex < this.episodes.length; epIndex++) {
 			const epData = this.episodes[epIndex];
+			if (!epData) continue; // missing episode
 
 			// Write out the .VOL archive.
 			const outputVol = arc_vol_cosmo.generate(epData.vol);
 			const volFilename = epData.exe.attributes['filename.archive.episode'].value;
-			await this.filesystem.write(volFilename, outputVol.main);
+			files[volFilename] = outputVol.main;
 
 			// Write out the .STN archive.
 			const outputStn = arc_vol_cosmo.generate(epData.stn);
 			const stnFilename = epData.exe.attributes['filename.archive.standard'].value;
-			await this.filesystem.write(stnFilename, outputStn.main);
+			files[stnFilename] = outputStn.main;
 
 			// Write out any changes to the .EXE file.
 			const outputExe = epData.handler.patch(epData.exeContent, epData.exe);
-			await this.filesystem.write(epData.exeFilename, outputExe.main);
+			files[epData.exeFilename] = outputExe.main;
 		}
+
+		return {
+			files,
+			warnings,
+		};
 	}
 }
