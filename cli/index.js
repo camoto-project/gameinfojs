@@ -299,42 +299,63 @@ class Operations
 		}
 
 		process.stdout.write(`Object class: ${doc.constructor.name}\n`);
-		if (doc instanceof Music) {
-			process.stdout.write(`Document type: Music\n`);
-			process.stdout.write(`Number of tracks: ${doc.trackConfig.length}\n`);
-			const instCount = {
-				MIDI: doc.patches.filter(p => p instanceof Patch.MIDI).length,
-				OPL: doc.patches.filter(p => p instanceof Patch.OPL).length,
-				PCM: doc.patches.filter(p => p instanceof Patch.PCM).length,
-			};
-			process.stdout.write(`Number of instruments:`);
-			for (const [ type, count ] of Object.entries(instCount)) {
-				process.stdout.write(chalk` ${type}:{greenBright ${count}}`);
-			}
-			process.stdout.write('\n');
+		switch (this.item.type) {
+			case 'music':
+				process.stdout.write(`Document type: Music\n`);
+				process.stdout.write(`Number of tracks: ${doc.trackConfig.length}\n`);
+				const instCount = {
+					MIDI: doc.patches.filter(p => p instanceof Patch.MIDI).length,
+					OPL: doc.patches.filter(p => p instanceof Patch.OPL).length,
+					PCM: doc.patches.filter(p => p instanceof Patch.PCM).length,
+				};
+				process.stdout.write(`Number of instruments:`);
+				for (const [ type, count ] of Object.entries(instCount)) {
+					process.stdout.write(chalk` ${type}:{greenBright ${count}}`);
+				}
+				process.stdout.write('\n');
+				break;
 
-		} else if (doc instanceof Image) {
-			process.stdout.write(`Document type: Image\n`);
-			process.stdout.write(`Dimensions: ${doc.dims.x} x ${doc.dims.y}\n`);
+			case 'image':
+				function imgInfo(img) {
+					process.stdout.write(`Document type: Image\n`);
+					process.stdout.write(`Dimensions: ${img.width} x ${img.height}\n`);
 
-			process.stdout.write(`Palette size: `);
-			if (doc.palette) {
-				process.stdout.write(doc.palette.length.toString());
-			} else {
-				process.stdout.write(`N/A`);
-			}
-			process.stdout.write(`\n`);
+					process.stdout.write(`Palette size: `);
+					if (img.palette) {
+						process.stdout.write(img.palette.length.toString());
+					} else {
+						process.stdout.write(`N/A`);
+					}
+					process.stdout.write(`\n`);
 
-			process.stdout.write(`Hotspot: `);
-			if (doc.hotspot && (doc.hotspot.x !== undefined)) {
-				process.stdout.write(`(${doc.hotspot.x}, ${doc.hotspot.y})`);
-			} else {
-				process.stdout.write(`None`);
-			}
-			process.stdout.write(`\n`);
+					process.stdout.write(`Hotspot: `);
+					if (img.hotspot && (img.hotspot.x !== undefined)) {
+						process.stdout.write(`(${img.hotspot.x}, ${img.hotspot.y})`);
+					} else {
+						process.stdout.write(`None`);
+					}
+					process.stdout.write(`\n`);
 
-		} else {
-			process.stdout.write(`Document type: Unknown\n`);
+					process.stdout.write(`Number of frames: ${img.frames.length}\n`);
+					for (let f = 0; f < img.frames.length; f++) {
+						const fr = img.frames[f];
+						process.stdout.write(`  ${f}: ${fr.width}x${fr.height}\n`);
+					}
+				}
+				if (doc.length > 0) {
+					// Array of images.
+					for (let i = 0; i < doc.length; i++) {
+						process.stdout.write(`\n* Image ${i}:\n`);
+						imgInfo(doc[i]);
+					}
+				} else {
+					// Single image.
+					imgInfo(doc);
+				}
+
+			default:
+				process.stdout.write(`Document type: Unknown (${this.item.type})\n`);
+				break;
 		}
 	}
 
