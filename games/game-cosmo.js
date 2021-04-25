@@ -337,9 +337,19 @@ export default class Game_Cosmo extends Game
 				file.diskSize = undefined; // don't know until written
 			};
 
+			// See if the file exists, for use below.
+			const fileUpper = filename.toUpperCase();
+			const file = epData.vol.files.find(f => f.name.toUpperCase() === fileUpper);
+
 			backdrops[`backdrop.${index}`] = {
 				title: `Backdrop ${index}`,
 				subtitle: filename,
+				// Disable it if it can't be found in the archive.  The .exe supports
+				// more backdrops/filenames than are shipped with the game, so we allow
+				// use of them all, but some of them require additional files to be
+				// added to the archive.
+				disabled: !file,
+				disabledReason: `File "${fileUpper}" does not exist in ${epData.volFilename}.`,
 				type: Game.ItemTypes.Image,
 				fnExtract,
 				fnReplace,
