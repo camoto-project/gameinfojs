@@ -39,12 +39,16 @@ import {
 } from '@camoto/gamegraphics';
 
 import Game from '../interface/game.js';
+import tilesetSplit from './game-ddave-tileset-split.js';
 
 const tilesetHandler = {
 	cga: tls_ddave_cga,
 	ega: tls_ddave_ega,
 	vga: tls_ddave_vga,
 };
+
+// Random colour that isn't used in the original game we can use as transparent.
+const PALETTE_TRANSPARENT = 230;
 
 export default class Game_DDave extends Game
 {
@@ -151,6 +155,9 @@ export default class Game_DDave extends Game
 			main: filePalVGA.getContent(),
 		});
 
+		// Override one colour as transparent
+		this.palVGA.palette[PALETTE_TRANSPARENT] = [255, 0, 255, 0];
+
 		return warnings;
 	}
 
@@ -191,172 +198,131 @@ export default class Game_DDave extends Game
 		const palIndexTransparent = {
 			cga: [3, 4],      // one more than full palette
 			ega: [15, 16],    // one more than full palette
-			vga: [255, 230],  // random colour that isn't used in the original game
+			vga: [255, PALETTE_TRANSPARENT], // random colour that isn't used in the original game
 		};
 
-		const addTiles = (title, xga, offset, count, width, masked = false) => {
-			let itmTiles = {
-				title: title,
-				type: Game.ItemTypes.Image,
-			};
-			if (!this.tileset[xga]) {
-				// Tileset wasn't loaded, disable opening.
-				itmTiles.disabled = true;
-			} else if (count === 1) {
-				itmTiles.fnOpen = () => {
-					// Extract this frame as a single image.
-					let imgSingle = this.tileset[xga].clone(offset, 1);
-					if (xga === 'vga') { // see VGA palette comment below
-						imgSingle.palette = this.palVGA.palette;
-					}
-					return imgSingle;
-				};
-				itmTiles.fnSave = obj => {
-					this.tileset[xga].frames.splice(offset, 1, obj.frames[0]);
-					return {
-						warnings: [],
-					};
-				};
-			} else {
-				// Function to open the file and return an Image.
-				itmTiles.fnOpen = () => {
-					let imgTiles = this.tileset[xga].clone(0, 0);
-					let imgSingle = this.tileset[xga].clone(0, 0);
-
-					// Apply the palette if required.  If we did it when we loaded the
-					// tileset then the above clone() would take care of it, but it means
-					// if the user replaced the palette it wouldn't get applied to the
-					// tileset until the game was reopened.  By applying it here we'll
-					// always use the most up-to-date palette.
-					if (xga === 'vga') {
-						imgSingle.palette = this.palVGA.palette;
-					}
-
-					if (masked) {
-						// These tiles are masked, so convert them into a single image with
-						// a transparent palette entry used instead of the mask.
-						const outputTiles = [];
-						let numImages = width;
-						const tiles = this.tileset[xga].frames.slice(offset, offset + numImages);
-						const masks = this.tileset[xga].frames.slice(offset + numImages, offset + numImages * 2);
-						const [ piMask, piTrans ] = palIndexTransparent[xga];
-						for (let i = 0; i < numImages; i++) {
-							outputTiles.push(
-								frameFromMask({
-									frVisible: tiles[i],
-									frMask: masks[i],
-									cb: (v, m) => (m === piMask) ? piTrans : v,
-								})
-							);
-						}
-						imgTiles.frames = outputTiles;
-
-						// Create a transparent entry in the palette.  The palette has
-						// already been cloned above so modifying it here is no problem.
-						if (xga === 'vga') {
-							// For VGA, pick an unused colour and make it transparent.
-							const c = palIndexTransparent[xga][1];
-							imgSingle.palette[c] = [0xFF, 0x00, 0xFF, 0x00];
-						} else {
-							// For CGA and EGA, add an extra palette entry for transparency.
-							imgSingle.palette.push([0xFF, 0x00, 0xFF, 0x00]);
-						}
-					} else {
-						// Extract the map tiles from the tileset and turn it into an image.
-						imgTiles.frames = this.tileset[xga].frames.slice(offset, offset + count);
-					}
-					imgSingle.frames = [
-						frameFromTileset(imgTiles, width)
-					];
-
-
-					return imgSingle;
-				};
-				itmTiles.fnSave = obj => {
-					// Convert the Image instance back into individual tiles and store
-					// them in the loaded tileset.
-					let tiles;
-					if (masked) {
-						// Convert the transparent pixels back to a mask image.
-						const origTiles = this.tileset[xga].frames.slice(offset, offset + width);
-						let inputTiles = tilesetFromFrame(obj.frames[0], origTiles, 0);
-						let clearTiles = [];
-						let masks = [];
-						for (let i = 0; i < width; i++) {
-							const { frVisible, frMask } = maskFromFrame({
-								img: inputTiles[i],
-								cb: p => {
-									const alpha = inputTiles[i].palette[p][3] === 0x00;
-									return [
-										// Pass the pixel through unchanged, unless it's transparent
-										// in which case use palette entry 0 instead.
-										alpha ? 0x00 : p,
-										// Set the mask pixel to palette entry 255 if it should be
-										// transparent, otherwise use 0.
-										alpha ? 0xFF : 0x00,
-									];
-								},
-							});
-							clearTiles.push(frVisible);
-							masks.push(frMask);
-						}
-						// Put all the visible tiles first, followed by all the masks.
-						tiles = [ ...clearTiles, ...masks ];
-					} else {
-						const origTiles = this.tileset[xga].frames.slice(offset, offset + count);
-						tiles = tilesetFromFrame(obj.frames[0], origTiles, 0);
-					}
-					// Replace a section of tiles within the tileset with the new list.
-					this.tileset[xga].frames.splice(offset, count, ...tiles);
-					return {
-						warnings: [],
-					};
-				};
-			}
-			return itmTiles;
-		}
 		// These ones are the same for all.
 		const gfxSources = ['cga', 'ega', 'vga'];
+
+		// Map codes in game-ddave-tileset-split.js into user-visible titles.
+		const friendlyNames = {
+			map: 'Map tiles',
+			player: 'Player sprites',
+			monsters: 'Monster sprites',
+			ui: 'Interface',
+			title: 'Title screen',
+			font: 'Status bar font',
+		};
+
+		//const gfxSources = ['cga', 'ega', 'vga'];
 		for (const xga of gfxSources) {
-			gfx[`${xga}-tiles`] = addTiles(`Map tiles (${xga.toUpperCase()})`, xga, 0, 53, 9);
-		}
-		const vgaTiles = [
-			['walk', 'Walking', 14, 7, true],
-			['jump', 'Jumping', 4, 2, true],
-			['climb', 'Climbing', 6, 3, true],
-			['fly', 'Flying', 12, 6, true],
-			['m1', 'Monster 1', 4, 4],
-			['m2', 'Monster 2', 4, 4],
-			['m3', 'Monster 3', 4, 4],
-			['m4', 'Monster 4', 4, 4],
-			['m5', 'Monster 5', 4, 4],
-			['m6', 'Monster 6', 4, 4],
-			['m7', 'Monster 7', 4, 4],
-			['m8', 'Monster 8', 4, 4],
-			['mb', 'Monster Bullet', 6, 6],
-			['bullet', 'Bullet', 2, 2],
-			['explode', 'Explosion', 4, 4],
-			['inv-jetpack', 'Inventory - Jetpack', 1, 1],
-			['inv-gun', 'Inventory - Gun', 1, 1],
-			['stat-lives', 'Status - Lives', 1, 1],
-			['stat-level', 'Status - Level', 1, 1],
-			['stat-score', 'Status - Score', 1, 1],
-			['inv-door', 'Inventory - Door', 1, 1],
-			['msg-warp', 'Message - Warp', 1, 1],
-			['msg-zone', 'Message - Zone', 1, 1],
-			['inv-fuel', 'Inventory - Jetpack fuel', 1, 1],
-			['inv-fuel-bar', 'Inventory - Jetpack fuel bar', 1, 1],
-			['stat-life', 'Status - Life icon', 1, 1],
-			['title', 'Title animation', 4, 1],
-			['font-numbers', 'Font (numbers)', 10, 10],
-		];
-		let nextTileVGA = 53, nextTileCEGA = 53;
-		for (const t of vgaTiles) {
-			gfx[`vga-${t[0]}`] = addTiles(t[1], 'vga', nextTileVGA, t[2], t[3], t[4]);
-			gfx[`ega-${t[0]}`] = addTiles(t[1], 'ega', nextTileCEGA, t[2]*4, t[3]*4, t[4]);
-			gfx[`cga-${t[0]}`] = addTiles(t[1], 'cga', nextTileCEGA, t[2]*2, t[3]*2, t[4]);
-			nextTileVGA += t[2];
-			nextTileCEGA += t[2]*2;
+			if (!this.tileset[xga]) continue; // might be missing egadave.dav
+			const XGA = xga.toUpperCase();
+
+			// Precalculate the palette to use for masked images.
+			let palTrans;
+			if (xga === 'vga') {
+				// For VGA, pick an unused colour and make it transparent.
+				palTrans = this.palVGA.palette.clone();
+				const c = palIndexTransparent[xga][1];
+				palTrans[c] = [0xFF, 0x00, 0xFF, 0x00];
+			} else {
+				// For CGA and EGA, add an extra palette entry for transparency.
+				palTrans = this.tileset[xga].palette.clone();
+				palTrans.push([0xFF, 0x00, 0xFF, 0x00]);
+			}
+
+			const srcFrames = this.tileset[xga].frames;
+			const [ piMask, piTrans ] = palIndexTransparent[xga];
+			for (const [ spriteId, spriteIndex ] of Object.entries(tilesetSplit[xga])) {
+				gfx[`${xga}-${spriteId}`] = {
+					title: `${XGA} - ${friendlyNames[spriteId]}`,
+					type: Game.ItemTypes.Image,
+
+					fnOpen: () => {
+						let sprites = [];
+						for (const [ idxColours, idxMasks, idxOrder, tDelay ] of spriteIndex) {
+							let sprite = this.tileset[xga].clone(0, 0);
+							sprite.palette = palTrans;
+
+							for (let i = 0; i < idxColours.length; i++) {
+								if (idxMasks[i]) {
+									// Unmask tile
+									sprite.frames.push(
+										frameFromMask({
+											frVisible: srcFrames[idxColours[i]],
+											frMask: srcFrames[idxMasks[i]],
+											cb: (v, m) => (m === piMask) ? piTrans : v,
+										})
+									);
+								} else {
+									// Tile is not masked
+									sprite.frames.push(srcFrames[idxColours[i]]);
+								}
+							}
+
+							if (idxOrder.length) {
+								sprite.animation = idxOrder.map(index => ({
+									index,
+									postDelay: tDelay,
+								}));
+							}
+
+							// Special case to indicate the font tileset works best with a
+							// particular width.
+							if (spriteId === 'font') {
+								sprite.fixedWidth = 10;
+							}
+
+							sprites.push(sprite);
+						}
+						return sprites;
+					},
+
+					fnSave: newImg => {
+						let idxNextIncomingImage = 0;
+						for (const [ idxColours, idxMasks, idxOrder, tDelay ] of spriteIndex) {
+							const imgIncoming = newImg[idxNextIncomingImage];
+							let idxNextIncomingFrame = 0;
+							for (let i = 0; i < idxColours.length; i++) {
+								const frameIncoming = imgIncoming.frames[idxNextIncomingFrame];
+								if (!frameIncoming) {
+									throw new Error(`Image ${idxNextIncomingImage}, frame `
+										+ `${idxNextIncomingFrame} is required but was not `
+										+ `supplied.  Make sure your source image hasn't been `
+										+ `cropped or is otherwise missing tiles.`);
+								}
+								if (idxMasks[i]) {
+									// Remask tile
+									const { frVisible, frMask } = maskFromFrame({
+										frame: frameIncoming,
+										cb: p => {
+											const alpha = p === piTrans;
+											return [
+												// Pass the pixel through unchanged, unless it's transparent
+												// in which case use palette entry 0 instead.
+												alpha ? 0x00 : p,
+												// Set the mask pixel to palette entry 255 if it should be
+												// transparent, otherwise use 0.
+												alpha ? piMask : 0x00,
+											];
+										},
+									});
+									srcFrames[idxColours[i]] = frVisible;
+									srcFrames[idxMasks[i]] = frMask;
+								} else {
+									// Tile is not masked
+									srcFrames[idxColours[i]] = frameIncoming;
+								}
+								// Move on to the next frame in the current incoming image.
+								idxNextIncomingFrame++;
+							}
+							// Move on to the next image in the array of incoming images.
+							idxNextIncomingImage++;
+						}
+					},
+				};
+			}
 		}
 
 		return {
@@ -414,7 +380,11 @@ export default class Game_DDave extends Game
 
 		const filePalVGA = this.exe.files.find(f => f.name.toLowerCase() === 'vga.pal');
 		filePalVGA.getContent = () => {
-			const generated = pal_vga_6bit.write(this.palVGA);
+			// Undo the temporary transparency we added to avoid a warning message.
+			let palCopy = this.palVGA.clone();
+			palCopy.palette[PALETTE_TRANSPARENT][3] = 255;
+
+			const generated = pal_vga_6bit.write(palCopy);
 			warnings = warnings.concat(generated.warnings);
 			return generated.content.main;
 		};
