@@ -312,7 +312,17 @@ export default class Game_DDave extends Game
 									srcFrames[idxMasks[i]] = frMask;
 								} else {
 									// Tile is not masked
-									srcFrames[idxColours[i]] = frameIncoming;
+
+									// We need per-frame dimensions here but the incoming image
+									// may only have image-level dimensions (not per-frame
+									// dimensions, since it's a single image) so copy across the
+									// whole-image dimensions if we don't have per-frame ones.
+									// Otherwise we'll end up writing the frame as a 0x0 picture.
+									let newFrame = frameIncoming.clone();
+									if (!newFrame.width) newFrame.width = imgIncoming.width;
+									if (!newFrame.height) newFrame.height = imgIncoming.height;
+
+									srcFrames[idxColours[i]] = newFrame;
 								}
 								// Move on to the next frame in the current incoming image.
 								idxNextIncomingFrame++;
