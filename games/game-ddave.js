@@ -283,6 +283,18 @@ export default class Game_DDave extends Game
 								sprite.fixedWidth = 10;
 							}
 
+							// There's a special case for the map tiles.  These aren't masked
+							// but we use the transparent palette anyway, because there is a
+							// prime number of tiles so no matter how we arrange them in a
+							// rectangular tileset there will always be at least one leftover
+							// space.  Normally this will be black making it look like there
+							// are extra tiles available, but with the transparent palette
+							// available it will get marked as transparent when frameCompose()
+							// looks for a transparent background colour, hopefully making it
+							// clearer it's not a real usable tile.
+							if (spriteId === 'map') {
+								sprite.palette = palTrans;
+							}
 							sprites.push(sprite);
 						}
 						return sprites;
