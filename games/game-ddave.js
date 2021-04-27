@@ -216,29 +216,34 @@ export default class Game_DDave extends Game
 			if (!this.tileset[xga]) continue; // might be missing egadave.dav
 			const XGA = xga.toUpperCase();
 
-			// Precalculate the palette to use for masked images.
-			let palTrans, palNorm;
-			if (xga === 'vga') {
-				// For VGA, pick an unused colour and make it transparent.
-				palNorm = this.palVGA.palette;
-				palTrans = palNorm.clone();
-				const c = palIndexTransparent[xga][1];
-				palTrans[c] = [0xFF, 0x00, 0xFF, 0x00];
-			} else {
-				// For CGA and EGA, add an extra palette entry for transparency.
-				palNorm = this.tileset[xga].palette;
-				palTrans = palNorm.clone();
-				palTrans.push([0xFF, 0x00, 0xFF, 0x00]);
-			}
-
 			const srcFrames = this.tileset[xga].frames;
 			const [ piMask, piTrans ] = palIndexTransparent[xga];
 			for (const [ spriteId, spriteIndex ] of Object.entries(tilesetSplit[xga])) {
 				gfx[`${xga}-${spriteId}`] = {
 					title: `${XGA} - ${friendlyNames[spriteId]}`,
 					type: Game.ItemTypes.Image,
+					limits: {
+						writePalette: false,
+					},
 
 					fnOpen: () => {
+						// Prepare the palette here, so that we update it every time an item
+						// is opened.  If we do it earlier, it'll get cached in the fixture
+						// images won't use a new palette until everything is reloaded.
+						let palTrans, palNorm;
+						if (xga === 'vga') {
+							// For VGA, pick an unused colour and make it transparent.
+							palNorm = this.palVGA.palette;
+							palTrans = palNorm.clone();
+							const c = palIndexTransparent[xga][1];
+							palTrans[c] = [0xFF, 0x01, 0xFF, 0x00];
+						} else {
+							// For CGA and EGA, add an extra palette entry for transparency.
+							palNorm = this.tileset[xga].palette;
+							palTrans = palNorm.clone();
+							palTrans.push([0xFF, 0x01, 0xFF, 0x00]);
+						}
+
 						let sprites = [];
 						for (const [ idxColours, idxMasks, idxOrder, tDelay ] of spriteIndex) {
 							let sprite = this.tileset[xga].clone(0, 0);
@@ -338,6 +343,13 @@ export default class Game_DDave extends Game
 				};
 			}
 		}
+
+		gfx['vga-palette'] = {
+			title: 'VGA - Palette',
+			type: Game.ItemTypes.Palette,
+			fnOpen: () => this.palVGA.palette,
+			fnSave: newPal => this.palVGA.palette = newPal,
+		};
 
 		return {
 			'levels': {

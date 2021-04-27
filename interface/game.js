@@ -107,6 +107,13 @@ export default class Game
 	 *
 	 * disabled: `true` if the user is not permitted to open the item, `false` or
 	 *   `undefined` if it can be opened.
+	 *
+	 * limits: restrictions on what can be done to ensure fnSave() can save the
+	 *   file.  Depends on the type:
+	 *
+	 *     - Image:
+	 *        - writePalette: `true` if setting the palette will save it back to
+	 *          the game, `false` if a changed palette will just be ignored.
 	 */
 	async items() {
 		throw new Error('BUG: Descendent class has not implemented this function!');
@@ -141,14 +148,14 @@ export default class Game
 // Standard item types used for building the tree of editable game items.  These
 // roughly translate to one type per editor.
 Game.ItemTypes = {
-	Folder: 'folder',
-	Attributes: 'attributes',
-	B800: 'b800',
-	Image: 'image',
-	Map: 'map',
-	Music: 'music',
-	Sound: 'sound',
-	Tileset: 'tileset',
+	Folder: 'folder',         // N/A
+	Attributes: 'attributes', // ?
+	B800: 'b800',             // ?
+	Image: 'image',           // Image or Image[] instance
+	Palette: 'palette',       // Image instance
+	Map: 'map',               // Map instance
+	Music: 'music',           // Music instance
+	Sound: 'sound',           // ?
 };
 
 Game.Severity = {
