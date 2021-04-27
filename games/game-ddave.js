@@ -155,9 +155,6 @@ export default class Game_DDave extends Game
 			main: filePalVGA.getContent(),
 		});
 
-		// Override one colour as transparent
-		this.palVGA.palette[PALETTE_TRANSPARENT] = [255, 0, 255, 0];
-
 		return warnings;
 	}
 
@@ -220,15 +217,17 @@ export default class Game_DDave extends Game
 			const XGA = xga.toUpperCase();
 
 			// Precalculate the palette to use for masked images.
-			let palTrans;
+			let palTrans, palNorm;
 			if (xga === 'vga') {
 				// For VGA, pick an unused colour and make it transparent.
-				palTrans = this.palVGA.palette.clone();
+				palNorm = this.palVGA.palette;
+				palTrans = palNorm.clone();
 				const c = palIndexTransparent[xga][1];
 				palTrans[c] = [0xFF, 0x00, 0xFF, 0x00];
 			} else {
 				// For CGA and EGA, add an extra palette entry for transparency.
-				palTrans = this.tileset[xga].palette.clone();
+				palNorm = this.tileset[xga].palette;
+				palTrans = palNorm.clone();
 				palTrans.push([0xFF, 0x00, 0xFF, 0x00]);
 			}
 
@@ -243,7 +242,12 @@ export default class Game_DDave extends Game
 						let sprites = [];
 						for (const [ idxColours, idxMasks, idxOrder, tDelay ] of spriteIndex) {
 							let sprite = this.tileset[xga].clone(0, 0);
-							sprite.palette = palTrans;
+							if (idxMasks.length) {
+								// Masked tile, use the palette with a transparent entry.
+								sprite.palette = palTrans;
+							} else {
+								sprite.palette = palNorm;
+							}
 
 							for (let i = 0; i < idxColours.length; i++) {
 								if (idxMasks[i]) {
@@ -390,11 +394,7 @@ export default class Game_DDave extends Game
 
 		const filePalVGA = this.exe.files.find(f => f.name.toLowerCase() === 'vga.pal');
 		filePalVGA.getContent = () => {
-			// Undo the temporary transparency we added to avoid a warning message.
-			let palCopy = this.palVGA.clone();
-			palCopy.palette[PALETTE_TRANSPARENT][3] = 255;
-
-			const generated = pal_vga_6bit.write(palCopy);
+			const generated = pal_vga_6bit.write(this.palVGA);
 			warnings = warnings.concat(generated.warnings);
 			return generated.content.main;
 		};
