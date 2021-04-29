@@ -187,6 +187,8 @@ export default class Game_DDave extends Game
 				fnExtract,
 				fnReplace,
 				fnOpen: () => this.openMap(filename),
+				disabled: true,
+				disabledReason: 'Level editing not yet implemented.',
 			};
 		}
 
@@ -378,6 +380,8 @@ export default class Game_DDave extends Game
 				title: `Sound effects`,
 				type: Game.ItemTypes.Sound,
 				fnOpen: () => this.openSounds('sounds.spk'),
+				disabled: true,
+				disabledReason: 'PC Speaker sounds not yet implemented.',
 			},
 		};
 	}
