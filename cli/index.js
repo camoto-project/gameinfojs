@@ -363,6 +363,11 @@ class Operations
 		// Get this each time otherwise we won't see updates after other changes.
 		const gameItems = await this.game.items();
 
+		if (!gameItems) {
+			console.log('No items found!');
+			return;
+		}
+
 		function show(depth, items) {
 			for (const i of Object.keys(items)) {
 				const item = items[i];
@@ -370,6 +375,10 @@ class Operations
 				const disabled = item.disabled ? chalk` {redBright DISABLED}` : '';
 				console.log('  '.repeat(depth) + chalk`* [{whiteBright ${i}}]: {yellowBright ${item.title}}${subtitle} {grey (${item.type})}${disabled}`);
 				if (item.type === Game.ItemTypes.Folder) {
+					if (!item.children) {
+						console.error('  '.repeat(depth) + chalk`! ERROR: item.children is missing!`);
+						continue;
+					}
 					show(depth + 1, item.children);
 				}
 			}
