@@ -25,16 +25,21 @@ const FORMAT_ID = 'game-cosmo';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import { exe_cosmo1 } from '@camoto/gamecode';
-import { decompressEXE } from '@camoto/gamecode';
+import {
+	decompressEXE,
+	exe_cosmo1,
+} from '@camoto/gamecode';
 import { arc_vol_cosmo } from '@camoto/gamearchive';
 import {
-	frameFromTileset,
-	tilesetFromFrame,
-	img_raw_planar_4bpp,
-	tls_cosmo,
 	Image,
+	frameFromTileset,
+	img_raw_planar_4bpp,
+	tilesetFromFrame,
+	tls_cosmo,
+	tls_cosmo_masked,
+	tls_cosmo_actrinfo,
 } from '@camoto/gamegraphics';
+import { map_cosmo } from '@camoto/gamemap';
 import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
 
 import Game from '../interface/game.js';
@@ -290,17 +295,134 @@ export default class Game_Cosmo extends Game
 			};
 		});
 
+		let tiles = {};
+		attributesToItems(epData.exe.attributes, 'filename.tileset.', (index, attr) => {
+			const filename = attr.value;
+
+			// Function to extract the raw song file.
+			const fnExtract = () => getFileVOL(filename).getContent();
+
+			// Function to overwrite the song file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
+			// These tilesets include transparency.
+			const masked = [
+				'masked',
+			].includes(index);
+
+			const handler = masked ? tls_cosmo_masked : tls_cosmo;
+
+			tiles[`tiles.${index}`] = {
+				title: 'Tiles ' + index,
+				subtitle: filename,
+				type: Game.ItemTypes.Image,
+				fnExtract: fnExtract,
+				fnReplace: fnReplace,
+				fnOpen: () => {
+					let tiles = handler.read({
+						main: fnExtract(),
+					});
+
+					// Each file has a different 'preferred width'.
+					tiles.fixedWidth = {
+						'statusbar': 38,
+						'level': 40,
+						'masked': 40,
+					}[index] || 10;
+
+					return tiles;
+				},
+				fnSave: (newImage) => {
+					const { warnings, content } = handler.write(newImage);
+					fnReplace(content.main);
+					return {
+						warnings,
+					};
+				},
+				fnRename: newName => rename(attr, newName),
+			};
+		});
+		attributesToItems(epData.exe.attributes, 'filename.tiles.', (index, attr) => {
+			const filename = attr.value;
+			const filenameFAT = epData.exe.attributes[`filename.tileinfo.${index}`].value;
+
+			// Function to extract the raw song file.
+			const fnExtract = () => getFileVOL(filename).getContent();
+			const fnExtractFAT = () => getFileVOL(filenameFAT).getContent();
+
+			// Function to overwrite the song file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+			const fnReplaceFAT = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filenameFAT);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
+			tiles[`tiles.${index}`] = {
+				title: 'Tiles ' + index,
+				subtitle: filename,
+				type: Game.ItemTypes.Image,
+				fnExtract: fnExtract,
+				fnReplace: fnReplace,
+				fnOpen: () => tls_cosmo_actrinfo.read({
+					main: fnExtract(),
+					info: fnExtractFAT(),
+				}),
+				fnSave: (newImage) => {
+					const { warnings, content } = tls_cosmo_actrinfo.write(newImage);
+					fnReplace(content.main);
+					fnReplaceFAT(content.info);
+					return {
+						warnings,
+					};
+				},
+				fnRename: newName => rename(attr, newName),
+			};
+		});
+
 		// Same for the levels.
 		let levels = {};
 		attributesToItems(epData.exe.attributes, 'filename.level.', (index, attr) => {
 			const filename = attr.value;
 			const isBonus = index.startsWith('bonus.');
 			const levelNumber = isBonus ? index.substr(6) : index;
+
+			// Function to extract the raw song file.
+			const fnExtract = () => getFileVOL(filename).getContent();
+
+			// Function to overwrite the song file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileVOL(filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
 			levels[`level.${index}`] = {
 				title: (isBonus ? 'Bonus level' : 'Level') + ' ' + levelNumber,
 				subtitle: filename,
 				type: Game.ItemTypes.Map,
-				fnOpen: () => this.openMap(filename),
+				fnExtract: fnExtract,
+				fnReplace: fnReplace,
+				fnOpen: () => {
+					let map = map_cosmo.parse({main: fnExtract()});
+					return map;
+				},
 				fnRename: newName => rename(attr, newName),
 			};
 		});
@@ -445,6 +567,11 @@ export default class Game_Cosmo extends Game
 				title: 'Levels',
 				type: Game.ItemTypes.Folder,
 				children: levels,
+			},
+			'tiles': {
+				title: 'Tiles',
+				type: Game.ItemTypes.Folder,
+				children: tiles,
 			},
 			'backdrop': {
 				title: 'Level backgrounds',
