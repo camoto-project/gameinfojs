@@ -111,9 +111,9 @@ export default class Game
 	 * limits: restrictions on what can be done to ensure fnSave() can save the
 	 *   file.  Depends on the type:
 	 *
-	 *     - Image:
-	 *        - writePalette: `true` if setting the palette will save it back to
-	 *          the game, `false` if a changed palette will just be ignored.
+	 *   - Image:
+	 *      - writePalette: `true` if setting the palette will save it back to
+	 *        the game, `false` if a changed palette will just be ignored.
 	 */
 	async items() {
 		throw new Error('BUG: Descendent class has not implemented this function!');
