@@ -421,6 +421,15 @@ export default class Game_Cosmo extends Game
 				fnReplace: fnReplace,
 				fnOpen: () => {
 					let map = map_cosmo.parse({main: fnExtract()});
+
+					// Open the tilesets.
+					map.setTilesets({
+						solid: tiles[`tiles.solid`].fnOpen(),
+						masked: tiles[`tiles.masked`].fnOpen(),
+						actors: tiles[`tiles.actors`].fnOpen(),
+						player: tiles[`tiles.player`].fnOpen(),
+					});
+
 					return map;
 				},
 				fnRename: newName => rename(attr, newName),
