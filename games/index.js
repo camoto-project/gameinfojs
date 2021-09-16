@@ -19,3 +19,4 @@
 
 export { default as game_cosmo } from './game-cosmo.js';
 export { default as game_ddave } from './game-ddave.js';
+export { default as game_nomad } from './game-nomad.js';
