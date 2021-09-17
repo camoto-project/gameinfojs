@@ -300,7 +300,7 @@ class Operations
 
 		process.stdout.write(`Object class: ${doc.constructor.name}\n`);
 		switch (this.item.type) {
-			case 'music':
+			case 'music': {
 				process.stdout.write(`Document type: Music\n`);
 				process.stdout.write(`Number of tracks: ${doc.trackConfig.length}\n`);
 				const instCount = {
@@ -314,8 +314,9 @@ class Operations
 				}
 				process.stdout.write('\n');
 				break;
+			}
 
-			case 'image':
+			case 'image': {
 				function imgInfo(img) {
 					process.stdout.write(`Document type: Image\n`);
 					process.stdout.write(`Dimensions: ${img.width} x ${img.height}\n`);
@@ -352,6 +353,8 @@ class Operations
 					// Single image.
 					imgInfo(doc);
 				}
+				break;
+			}
 
 			default:
 				process.stdout.write(`Document type: Unknown (${this.item.type})\n`);

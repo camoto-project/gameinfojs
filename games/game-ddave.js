@@ -34,10 +34,8 @@ import {
 	Frame,
 	Image,
 	frameFromMask,
-	frameFromTileset,
 	maskFromFrame,
 	pal_vga_6bit,
-	tilesetFromFrame,
 	tls_ddave_cga,
 	tls_ddave_ega,
 	tls_ddave_vga,
@@ -464,7 +462,7 @@ export default class Game_DDave extends Game
 
 	saveTileset(newImg, xga, srcFrames, spriteIndex, piMask, piTrans) {
 		let idxNextIncomingImage = 0;
-		for (const [ idxColours, idxMasks, idxOrder, tDelay ] of spriteIndex) {
+		for (const [ idxColours, idxMasks, /* idxOrder, tDelay */ ] of spriteIndex) {
 			const imgIncoming = newImg[idxNextIncomingImage];
 			let idxNextIncomingFrame = 0;
 			for (let i = 0; i < idxColours.length; i++) {
@@ -513,7 +511,7 @@ export default class Game_DDave extends Game
 			// Move on to the next image in the array of incoming images.
 			idxNextIncomingImage++;
 		}
-	};
+	}
 
 	loadAllLevels(gfx) {
 		let levels = {};
