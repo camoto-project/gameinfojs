@@ -97,3 +97,25 @@ During development you can test your code like this:
 
     # Run the unit tests to ensure code passes the lint checks.
     $ DEBUG='gameinfo:*' npm test
+
+Once your code is at the point where you've gone as far as you can go with the
+CLI, you will probably want to test it with the web version of Camoto, so you
+can view images, maps, etc.
+
+To do this, clone the [studiojs repo](https://github.com/camoto-project/studiojs)
+and follow the instructions to get it running locally.  Then replace the
+gameinfojs dependency with your local version:
+
+    cd studiojs
+    npm remove @camoto/gameinfo
+    npm install ../gameinfojs    # Use the path to your local copy
+
+This will then make your local web UI use your development gameinfojs code, so
+you can test out your changes before sending in a PR.
+
+You can do a similar thing in gameinfo.js, removing one of the other
+dependencies (say @camoto/gamemap) and replacing it with a local instance.
+In this example, you would be able to change level reading/writing code in
+gamemap.js and test it immediately through the web UI when opening a game level.
+Depending on your caching/file watching settings, you may need to restart the
+local web UI server before it picks up your changes.
