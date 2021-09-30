@@ -26,21 +26,27 @@ const FORMAT_ID = 'game-nomad';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import { exe_nomad } from '@camoto/gamecode';
+import {
+	exe_nomad
+} from '@camoto/gamecode';
 import {
 	pal_vga_6bit_papyrus,
 	img_raw_linear_8bpp,
 	Image_Stp_V2,
-	Image_Rol_V2
+	Image_Rol_V2,
+	img_del,
+	img_pln,
+	paletteVGA256
 } from '@camoto/gamegraphics';
 
 import Game from '../interface/game.js';
-import { arc_dat_papyrus_v1 } from '@camoto/gamearchive';
+import {
+	arc_dat_papyrus_v1
+} from '@camoto/gamearchive';
 
 const exeFilename = 'nomad.exe';
 
-function attributesToItems(attributes, prefix, cb)
-{
+function attributesToItems(attributes, prefix, cb) {
 	const matchedAttr = Object.keys(attributes)
 		.filter(n => n.startsWith(prefix));
 	for (const idAttr of matchedAttr) {
@@ -49,8 +55,7 @@ function attributesToItems(attributes, prefix, cb)
 	}
 }
 
-export default class Game_Nomad extends Game
-{
+export default class Game_Nomad extends Game {
 	static metadata() {
 		let md = {
 			...super.metadata(),
@@ -88,25 +93,27 @@ export default class Game_Nomad extends Game
 			const identified = exe_nomad.identify(this.exeContent);
 			if (!identified.valid) {
 				debug(`identify() failed for ${exeFilename}: ${identified.reason}`);
-				warnings.push(`${exeFilename} could not be positively identified.  It `
-					+ `may be an unsupported version, modified, or corrupted.  `
-					+ `Proceeding, you may encounter corruption.  If this is an `
-					+ `official, unmodified version of the game, please report it so we `
-					+ `can add support for it.`);
+				warnings.push(`${exeFilename} could not be positively identified.  It ` +
+					`may be an unsupported version, modified, or corrupted.  ` +
+					`Proceeding, you may encounter corruption.  If this is an ` +
+					`official, unmodified version of the game, please report it so we ` +
+					`can add support for it.`);
 			} else {
-				this.exe = exe_nomad.extract({main: this.exeContent});
+				this.exe = exe_nomad.extract({
+					main: this.exeContent
+				});
 			}
 		} catch (e) {
 			debug(e);
 			throw new Error(`Unable to continue, error while reading ${exeFilename}: ${e.message}`);
 		}
 
-		this.datAnimFilename     = this.exe.attributes['filename.dat.anim'].value;
+		this.datAnimFilename = this.exe.attributes['filename.dat.anim'].value;
 		this.datConverseFilename = this.exe.attributes['filename.dat.converse'].value;
-		this.datInventFilename   = this.exe.attributes['filename.dat.invent'].value;
-		this.datSamplesFilename  = this.exe.attributes['filename.dat.samples'].value;
-		this.datTestFilename     = this.exe.attributes['filename.dat.test'].value;
-		
+		this.datInventFilename = this.exe.attributes['filename.dat.invent'].value;
+		this.datSamplesFilename = this.exe.attributes['filename.dat.samples'].value;
+		this.datTestFilename = this.exe.attributes['filename.dat.test'].value;
+
 		let content_anim = {
 			main: await this.filesystem.read(this.datAnimFilename),
 		};
@@ -153,8 +160,10 @@ export default class Game_Nomad extends Game
 
 		// The GAME.PAL palette is used for all Stamp (.stp) and Stamp Roll (.rol) images,
 		// so read it once at the start.
-		const gamePalContent = {main: getFileFromDat(this.datTest, 'GAME.PAL').getContent()};
-		const gamePal = pal_vga_6bit_papyrus.read(gamePalContent);
+		const gamePalContent = {
+			main: getFileFromDat(this.datTest, 'GAME.PAL').getContent()
+		};
+		const gamePal = pal_vga_6bit_papyrus.read(gamePalContent).palette;
 
 		//
 		// Fullscreen images and cinematic backdrops
@@ -162,59 +171,59 @@ export default class Game_Nomad extends Game
 		let fullscreen = {};
 		attributesToItems(this.exe.attributes, 'filename.fullscreen.', (index, attr) => {
 			const titles = {
-				'backg':    'Title screen planetary background',
-				'cock1':    'Cockpit zoom animation, frame 1',
-				'cock2':    'Cockpit zoom animation, frame 2',
-				'cock3':    'Cockpit zoom animation, frame 3',
-				'cock4':    'Cockpit zoom animation, frame 4',
-				'cock5':    'Cockpit zoom animation, frame 5',
-				'crashed':  'Crashed ship in snow',
+				'backg': 'Title screen planetary background',
+				'cock1': 'Cockpit zoom animation, frame 1',
+				'cock2': 'Cockpit zoom animation, frame 2',
+				'cock3': 'Cockpit zoom animation, frame 3',
+				'cock4': 'Cockpit zoom animation, frame 4',
+				'cock5': 'Cockpit zoom animation, frame 5',
+				'crashed': 'Crashed ship in snow',
 				'cred0001': 'Credits, page 1',
 				'cred0002': 'Credits, page 2',
 				'cred0003': 'Credits, page 3',
 				'cred0004': 'Credits, page 4',
 				'cred0005': 'Credits, page 5',
 				'cred0006': 'Credits, page 6',
-				'end1a':    'Player\'s crashed escape pod scene, exterior',
-				'end1b':    'Player\'s crashed escape pod scene, interior',
-				'fixed':    'Repaired ship in hangar',
-				'getname':  'Cockpit newgame screen',
-				'korok01':  'Endgame scene, Korok victory',
-				'korok02':  'Endgame scene, Korok victory',
-				'oesi':     'OESI logo',
-				'open08':   'Earthscape',
-				'snow':     'Intro cinematic snow field',
-				'win01':    'Endgame scene, Alliance victory',
-				'win03':    'Endgame scene, Alliance victory',
-				'win04':    'Endgame scene, Alliance victory',
+				'end1a': 'Player\'s crashed escape pod scene, exterior',
+				'end1b': 'Player\'s crashed escape pod scene, interior',
+				'fixed': 'Repaired ship in hangar',
+				'getname': 'Cockpit newgame screen',
+				'korok01': 'Endgame scene, Korok victory',
+				'korok02': 'Endgame scene, Korok victory',
+				'oesi': 'OESI logo',
+				'open08': 'Earthscape',
+				'snow': 'Intro cinematic snow field',
+				'win01': 'Endgame scene, Alliance victory',
+				'win03': 'Endgame scene, Alliance victory',
+				'win04': 'Endgame scene, Alliance victory',
 			};
 
 			const palettes = {
-				'backg':    'backg.pal',
-				'cock1':    'backg.pal',
-				'cock2':    'backg.pal',
-				'cock3':    'backg.pal',
-				'cock4':    'backg.pal',
-				'cock5':    'backg.pal',
-				'crashed':  'backg.pal',
+				'backg': 'backg.pal',
+				'cock1': 'backg.pal',
+				'cock2': 'backg.pal',
+				'cock3': 'backg.pal',
+				'cock4': 'backg.pal',
+				'cock5': 'backg.pal',
+				'crashed': 'backg.pal',
 				'cred0001': 'cred0001.pal',
 				'cred0002': 'cred0001.pal',
 				'cred0003': 'cred0001.pal',
 				'cred0004': 'cred0001.pal',
 				'cred0005': 'cred0001.pal',
 				'cred0006': 'cred0001.pal',
-				'end1a':    'end1a.pal',
-				'end1b':    'end1b.pal',
-				'fixed':    'backg.pal',
-				'getname':  'getname.pal',
-				'korok01':  'korok01.pal',
-				'korok02':  'korok02.pal',
-				'oesi':     'backg.pal',
-				'open08':   'open08.pal',
-				'snow':     'backg.pal',
-				'win01':    'win01.pal',
-				'win03':    'win03.pal',
-				'win04':    'win04.pal',
+				'end1a': 'end1a.pal',
+				'end1b': 'end1b.pal',
+				'fixed': 'backg.pal',
+				'getname': 'getname.pal',
+				'korok01': 'korok01.pal',
+				'korok02': 'korok02.pal',
+				'oesi': 'backg.pal',
+				'open08': 'open08.pal',
+				'snow': 'backg.pal',
+				'win01': 'win01.pal',
+				'win03': 'win03.pal',
+				'win04': 'win04.pal',
 			};
 
 			// Depending on the area of the game's code in which a fullscreen image
@@ -224,7 +233,7 @@ export default class Game_Nomad extends Game
 			if (filename.substr(filename.length - 4) !== '.lbm') {
 				filename = filename + '.lbm';
 			}
-			
+
 			// Function to extract the raw image file.
 			const fnExtract = () => getFileFromDat(this.datTest, filename).getContent();
 
@@ -256,11 +265,13 @@ export default class Game_Nomad extends Game
 					});
 
 					if (index in palettes) {
-						const palContent = {main: getFileFromDat(this.datTest, palettes[index]).getContent()};
+						const palContent = {
+							main: getFileFromDat(this.datTest, palettes[index]).getContent()
+						};
 						const pal = pal_vga_6bit_papyrus.read(palContent);
 						imgData.palette = pal.palette;
 					}
-					
+
 					return imgData;
 				},
 				fnSave: (content) => {
@@ -284,7 +295,7 @@ export default class Game_Nomad extends Game
 		const numInventoryItems = 254;
 
 		for (let i = 1; i <= numInventoryItems; i += 1) {
-			
+
 			const paddedNum = i.toString().padStart(4, '0');
 			const filename = `inv${paddedNum}.stp`;
 
@@ -314,7 +325,7 @@ export default class Game_Nomad extends Game
 					};
 
 					let stpImg = Image_Stp_V2.read(content);
-					stpImg.palette = gamePal.palette;
+					stpImg.palette = gamePal;
 
 					return stpImg;
 				},
@@ -336,17 +347,17 @@ export default class Game_Nomad extends Game
 		attributesToItems(this.exe.attributes, 'filename.stamp.', (index, attr) => {
 			const filename = attr.value;
 			const titles = {
-				'pscan':    'Planet scan display border',
-				'navmap':   'Navigation starmap, galaxy background',
+				'pscan': 'Planet scan display border',
+				'navmap': 'Navigation starmap, galaxy background',
 				'navbkgnd': 'Navigation starmap, sector background',
-				'gtek':     'GameTek intro logo',
-				'nomad':    'Nomad title logo',
-				'design':   'Intense! Interactive intro logo',
-				'papyrus':  'Papyrus Design Group intro logo',
-				'border':   'Intro screen border',
-				'guybody':  'Intro briefing guy',
-				'sh01':     'Ship shield effect, frame A',
-				'sh02':     'Ship shield effect, frame B',
+				'gtek': 'GameTek intro logo',
+				'nomad': 'Nomad title logo',
+				'design': 'Intense! Interactive intro logo',
+				'papyrus': 'Papyrus Design Group intro logo',
+				'border': 'Intro screen border',
+				'guybody': 'Intro briefing guy',
+				'sh01': 'Ship shield effect, frame A',
+				'sh02': 'Ship shield effect, frame B',
 			};
 
 			// Names of STP images that use the GAME.PAL palette;
@@ -389,10 +400,12 @@ export default class Game_Nomad extends Game
 					// Use GAME.PAL if the image requires it;
 					// otherwise use backg.pal
 					if (gamePalImages.includes(index)) {
-						stpImg.palette = gamePal.palette;
+						stpImg.palette = gamePal;
 
 					} else {
-						const palContent = {main: getFileFromDat(this.datTest, 'backg.pal').getContent()};
+						const palContent = {
+							main: getFileFromDat(this.datTest, 'backg.pal').getContent()
+						};
 						const pal = pal_vga_6bit_papyrus.read(palContent);
 						stpImg.palette = pal.palette;
 					}
@@ -411,18 +424,118 @@ export default class Game_Nomad extends Game
 		});
 
 		//
+		// Frames of an explosion effect (not stored as explicit filenames in the .exe)
+		//
+		const numExplosionFrames = 5;
+		for (let i = 1; i <= numExplosionFrames; i += 1) {
+
+			const paddedNum = i.toString().padStart(2, '0');
+			const filename = `EX${paddedNum}.STP`;
+
+			// Function to extract the raw image file.
+			const fnExtract = () => getFileFromDat(this.datTest, filename).getContent();
+
+			// Function to overwrite the file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileFromDat(this.datTest, filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
+			stamp[`stamp.ex${paddedNum}`] = {
+				title: `Explosion effect, frame ${i}`,
+				subtitle: filename,
+				type: Game.ItemTypes.Image,
+				fnExtract,
+				fnReplace,
+
+				// Function to open the file and return an Image instance.
+				fnOpen: () => {
+					const content = {
+						main: fnExtract(),
+					};
+
+					let stpImg = Image_Stp_V2.read(content);
+					stpImg.palette = gamePal;
+
+					return stpImg;
+				},
+				fnSave: (content) => {
+					const outContent = Image_Stp_V2.write(content);
+					fnReplace(outContent.content.main);
+
+					return {
+						warnings: outContent.warnings,
+					};
+				},
+			};
+		}
+
+		//
+		// Background star types (not stored as explicit filenames in the .exe)
+		//
+		const numBgStarTypes = 12;
+		for (let i = 1; i <= numBgStarTypes; i += 1) {
+
+			const paddedNum = i.toString().padStart(4, '0');
+			const filename = `STAR${paddedNum}.STP`;
+
+			// Function to extract the raw image file.
+			const fnExtract = () => getFileFromDat(this.datTest, filename).getContent();
+
+			// Function to overwrite the file.
+			const fnReplace = content => {
+				// Replace getContent() with a function that returns the new content.
+				let file = getFileFromDat(this.datTest, filename);
+				file.getContent = () => content;
+				file.nativeSize = content.length;
+				file.diskSize = undefined; // don't know until written
+			};
+
+			stamp[`stamp.star${paddedNum}`] = {
+				title: `Background star, type ${i}`,
+				subtitle: filename,
+				type: Game.ItemTypes.Image,
+				fnExtract,
+				fnReplace,
+
+				// Function to open the file and return an Image instance.
+				fnOpen: () => {
+					const content = {
+						main: fnExtract(),
+					};
+
+					let stpImg = Image_Stp_V2.read(content);
+					stpImg.palette = gamePal;
+
+					return stpImg;
+				},
+				fnSave: (content) => {
+					const outContent = Image_Stp_V2.write(content);
+					fnReplace(outContent.content.main);
+
+					return {
+						warnings: outContent.warnings,
+					};
+				},
+			};
+		}
+
+		//
 		// Overlay animations ("stamp rolls"); multi-frame .ROL format only
 		//
 		let stamproll = {};
 		attributesToItems(this.exe.attributes, 'filename.stamproll.', (index, attr) => {
 			const filename = attr.value;
 			const titles = {
-				'shipst':   'Engineering subsystem icons',
-				'shp':      'Ship scan schematics',
-				'smk':      'Snow crash particles and smoke',
-				'guyhead':  'Intro briefing guy head animation, front',
+				'shipst': 'Engineering subsystem icons',
+				'shp': 'Ship scan schematics',
+				'smk': 'Snow crash particles and smoke',
+				'guyhead': 'Intro briefing guy head animation, front',
 				'guyhead2': 'Intro briefing guy head animation, profile',
-				'guyturn':  'Intro briefing guy body animation',
+				'guyturn': 'Intro briefing guy body animation',
 			};
 
 			// Names of ROL images that use the GAME.PAL palette;
@@ -462,10 +575,12 @@ export default class Game_Nomad extends Game
 					// Use GAME.PAL if the image requires it;
 					// otherwise use backg.pal
 					if (gamePalImages.includes(index)) {
-						rolImg.palette = gamePal.palette;
+						rolImg.palette = gamePal;
 
 					} else {
-						const palContent = {main: getFileFromDat(this.datTest, 'backg.pal').getContent()};
+						const palContent = {
+							main: getFileFromDat(this.datTest, 'backg.pal').getContent()
+						};
 						const pal = pal_vga_6bit_papyrus.read(palContent);
 						rolImg.palette = pal.palette;
 					}
@@ -482,6 +597,184 @@ export default class Game_Nomad extends Game
 				},
 			};
 		});
+
+		//
+		// Alien animation cels
+		//
+		let alien = {};
+		const numCelsPerAlienSpecies = {
+			'al': 6,
+			'ar': 42,
+			'be': 56,
+			'ch': 54,
+			'ke': 14,
+			'ko': 32,
+			'mu': 55,
+			'pa': 51,
+			'ph': 49,
+			'sh': 43,
+			'ur': 41,
+		};
+		// The actual in-game animations cels are created through a combination of
+		// a .DEL file and one of many palettes (.PAL). There is no "default" palette
+		// for most of these animations, so we'll simply choose an arbitrary one.
+		// Notes:
+		//   Palette number 00 does not exist for most sets.
+		//   Only the Altec Hocker and Kenelm animation sets have a single palette available;
+		//     all other alien animation sets have multiple available palettes.
+		const firstPalPerAlienSpecies = {
+			'al': 'ALT0001.PAL',
+			'ar': 'ARD20.PAL',
+			'be': 'BEL03.PAL',
+			'ch': 'CHA07.PAL',
+			'ke': 'KEN.PAL',
+			'ko': 'KOR02.PAL',
+			'mu': 'MUS12.PAL',
+			'pa': 'PAH00.PAL',
+			'ph': 'PHE10.PAL',
+			'sh': 'SHA04.PAL',
+			'ur': 'URS00.PAL',
+		};
+		const speciesNames = {
+			'al': 'Altec Hocker',
+			'ar': 'Arden',
+			'be': 'Bellicosian',
+			'ch': 'Chanticleer',
+			'ke': 'Kenelm',
+			'ko': 'Korok',
+			'mu': 'Musin',
+			'pa': 'Pahrump',
+			'ph': 'Phelonese',
+			'sh': 'Shaasa',
+			'ur': 'Ursor'
+		};
+
+		for (const [species, numCels] of Object.entries(numCelsPerAlienSpecies)) {
+
+			const palFilename = firstPalPerAlienSpecies[species];
+			for (let celIndex = 1; celIndex <= numCels; celIndex += 1) {
+
+				const paddedNum = celIndex.toString().padStart(4, '0');
+				const delFilename = `${species}${paddedNum}.del`;
+
+				// Function to extract the raw image file.
+				const fnExtract = () => getFileFromDat(this.datAnim, delFilename).getContent();
+
+				// Function to overwrite the file.
+				const fnReplace = content => {
+					// Replace getContent() with a function that returns the new content.
+					let file = getFileFromDat(this.datAnim, delFilename);
+					file.getContent = () => content;
+					file.nativeSize = content.length;
+					file.diskSize = undefined; // don't know until written
+				};
+
+				const speciesId = `${speciesNames[species]}`.toLowerCase().replace(/\s+/g, '');
+
+				alien[`alien.${speciesId}.${celIndex}`] = {
+					title: `${speciesNames[species]}, cel ${celIndex}`,
+					subtitle: delFilename,
+					type: Game.ItemTypes.Image,
+					fnExtract,
+					fnReplace,
+
+					// Function to open the file and return an Image instance.
+					fnOpen: () => {
+						const content = {
+							main: fnExtract(),
+						};
+
+						// Some of the alien palettes are sparse (i.e. they only contain a subset of the
+						// full 256 colors allowed by the video mode.) However, some of the animation cels
+						// use colors outside the sparse palette, so these images therefore depend on the
+						// colors that were previously loaded to the VGA by other game palettes. Replicate this
+						// behavior here by starting with GAME.PAL and then overlaying the sparse alien pal.
+						const sparsePalContent = {
+							main: getFileFromDat(this.datAnim, palFilename).getContent()
+						};
+						const sparsePal = pal_vga_6bit_papyrus.read(sparsePalContent).palette;
+						const fullPal = Object.assign([], paletteVGA256(), gamePal, sparsePal);
+
+						let delImg = img_del.read(content);
+						delImg.palette = fullPal;
+
+						return delImg;
+					},
+					fnSave: (content) => {
+						const outContent = img_del.write(content);
+						fnReplace(outContent.content.main);
+
+						return {
+							warnings: outContent.warnings,
+						};
+					},
+				};
+			}
+		}
+
+		//
+		// Textures for planet globes
+		//
+		let planet = {};
+		const numPlanetTextures = 51;
+		const skippedPlanetTextures = [21, 22, 23];
+
+		for (let i = 0; i < numPlanetTextures; i += 1) {
+
+			// if this texture index isn't one of the three that is unused
+			if (!skippedPlanetTextures.includes(i)) {
+
+				const paddedNum = i.toString().padStart(2, '0');
+				const plnFilename = `WORLD${paddedNum}a.pln`;
+				const palFilename = `WORLD${paddedNum}a.pal`;
+
+				// Function to extract the raw image file.
+				const fnExtract = () => getFileFromDat(this.datTest, plnFilename).getContent();
+
+				// Function to overwrite the file.
+				const fnReplace = content => {
+					// Replace getContent() with a function that returns the new content.
+					let file = getFileFromDat(this.datTest, plnFilename);
+					file.getContent = () => content;
+					file.nativeSize = content.length;
+					file.diskSize = undefined; // don't know until written
+				};
+
+				planet[`planet.${i}`] = {
+					title: `Planet texture ${i}`,
+					subtitle: plnFilename,
+					type: Game.ItemTypes.Image,
+					fnExtract,
+					fnReplace,
+
+					// Function to open the file and return an Image instance.
+					fnOpen: () => {
+						const content = {
+							main: fnExtract(),
+						};
+
+						let plnImg = img_pln.read(content);
+
+						const sparsePalContent = {
+							main: getFileFromDat(this.datTest, palFilename).getContent()
+						};
+						const sparsePal = pal_vga_6bit_papyrus.read(sparsePalContent).palette;
+						const fullPal = Object.assign([], paletteVGA256(), gamePal, sparsePal);
+
+						plnImg.palette = fullPal;
+						return plnImg;
+					},
+					fnSave: (content) => {
+						const outContent = img_pln.write(content);
+						fnReplace(outContent.content.main);
+
+						return {
+							warnings: outContent.warnings,
+						};
+					},
+				};
+			}
+		}
 
 		return {
 			'fullscreen': {
@@ -503,6 +796,16 @@ export default class Game_Nomad extends Game
 				title: 'Animations (stamp rolls)',
 				type: Game.ItemTypes.Folder,
 				children: stamproll,
+			},
+			'alien': {
+				title: 'Alien animations cels',
+				type: Game.ItemTypes.Folder,
+				children: alien,
+			},
+			'planet': {
+				title: 'Planet surface textures',
+				type: Game.ItemTypes.Folder,
+				children: planet,
 			},
 		};
 	}
@@ -529,7 +832,7 @@ export default class Game_Nomad extends Game
 		// Write out any changes to the .EXE file.
 		const outputExe = exe_nomad.patch(this.exeContent, this.exe);
 		files[exeFilename] = outputExe.main;
-	
+
 		return {
 			files,
 			warnings,
