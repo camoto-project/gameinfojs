@@ -22,7 +22,7 @@
 
 const FORMAT_ID = 'game-cosmo';
 
-import Debug from '../util/debug.js';
+import Debug from '../../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
 import { exe_cosmo1 } from '@camoto/gamecode';
@@ -40,7 +40,7 @@ import {
 import { map_cosmo } from '@camoto/gamemap';
 import { mus_imf_idsoftware_type0 } from '@camoto/gamemusic';
 
-import Game from '../interface/game.js';
+import Game from '../../interface/game.js';
 
 function attributesToItems(attributes, prefix, cb)
 {

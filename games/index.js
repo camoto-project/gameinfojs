@@ -17,6 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export { default as game_cosmo } from './game-cosmo.js';
-export { default as game_ddave } from './game-ddave.js';
+export { default as game_cosmo } from './game-cosmo/index.js';
+export { default as game_ddave } from './game-ddave/index.js';
 export { default as game_nomad } from './game-nomad.js';

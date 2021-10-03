@@ -22,7 +22,7 @@
 
 const FORMAT_ID = 'game-ddave';
 
-import Debug from '../util/debug.js';
+import Debug from '../../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
 import { exe_ddave } from '@camoto/gamecode';
@@ -40,8 +40,8 @@ import {
 } from '@camoto/gamegraphics';
 import { map_ddave } from '@camoto/gamemap';
 
-import Game from '../interface/game.js';
-import tilesetSplit from './game-ddave-tileset-split.js';
+import Game from '../../interface/game.js';
+import tilesetSplit from './tileset-split.js';
 
 const tilesetHandler = {
 	cga: tls_ddave_cga,
