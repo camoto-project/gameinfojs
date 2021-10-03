@@ -25,10 +25,8 @@ const FORMAT_ID = 'game-ddave';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import {
-	decompressEXE,
-	exe_ddave,
-} from '@camoto/gamecode';
+import { exe_ddave } from '@camoto/gamecode';
+import { decompress_exe } from '@camoto/gamecomp';
 import { arc_exe_ddave } from '@camoto/gamearchive';
 import {
 	Frame,
@@ -93,7 +91,7 @@ export default class Game_DDave extends Game
 		try {
 			// Decompress the EXE.
 			const content_exe = {
-				main: decompressEXE(await this.filesystem.read(exeFilename)),
+				main: decompress_exe(await this.filesystem.read(exeFilename)),
 			};
 
 			// Read all the files out of it.

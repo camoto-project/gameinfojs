@@ -25,10 +25,8 @@ const FORMAT_ID = 'game-cosmo';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import {
-	decompressEXE,
-	exe_cosmo1,
-} from '@camoto/gamecode';
+import { exe_cosmo1 } from '@camoto/gamecode';
+import { decompress_exe } from '@camoto/gamecomp';
 import { arc_vol_cosmo } from '@camoto/gamearchive';
 import {
 	Image,
@@ -148,7 +146,7 @@ export default class Game_Cosmo extends Game
 			epData.exeFilename = `cosmo${epNumber}.exe`;
 			try {
 				epData.exeContent = {
-					main: decompressEXE(await this.filesystem.read(epData.exeFilename)),
+					main: decompress_exe(await this.filesystem.read(epData.exeFilename)),
 				};
 				const identified = epData.handler.identify(epData.exeContent.main);
 				if (!identified.valid) {
