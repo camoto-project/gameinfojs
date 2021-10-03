@@ -1,5 +1,5 @@
-/**
- * @file Extra tests for game-cosmo.
+/*
+ * Extra tests for game-cosmo.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -19,7 +19,6 @@
 
 import assert from 'assert';
 import TestUtil from './util.js';
-import { originalFiles, unmodifiedFiles } from './game-hashes.js';
 import { game_cosmo as handler } from '../index.js';
 
 const md = handler.metadata();
@@ -32,7 +31,7 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 
 		// Make sure the files we expect are present, to avoid errors from
 		// supplying the wrong files.
-		await testutil.checkExpectedFiles(originalFiles[md.id]);
+		await testutil.checkOriginalFiles();
 	});
 
 	it('should allow tileset modification', async function() {
@@ -66,9 +65,7 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		await testutil.checkFileHash(
 			files,
 			{
-				'cosmo1.exe': unmodifiedFiles[md.id]['cosmo1.exe'],
 				'cosmo1.stn': 'DIoZWWMNKGA6ONIt1neBR6CFYxQ=',
-				'cosmo1.vol': unmodifiedFiles[md.id]['cosmo1.vol'],
 			},
 			'Incorrect data produced after modification'
 		);
@@ -105,9 +102,7 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		await testutil.checkFileHash(
 			files,
 			{
-				'cosmo1.exe': unmodifiedFiles[md.id]['cosmo1.exe'],
-				'cosmo1.stn': unmodifiedFiles[md.id]['cosmo1.stn'],
-				'cosmo1.vol': unmodifiedFiles[md.id]['cosmo1.vol'],
+				'cosmo1.vol': 'TODO',
 			},
 			'Incorrect data produced after modification'
 		);

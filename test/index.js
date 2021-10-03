@@ -55,7 +55,7 @@ for (const handler of allGames) {
 
 				// Make sure the files we expect are present, to avoid errors from
 				// supplying the wrong files.
-				await testutil.checkExpectedFiles(originalFiles[md.id]);
+				await testutil.checkOriginalFiles();
 			});
 
 			describe('identify()', function() {
@@ -121,7 +121,7 @@ for (const handler of allGames) {
 
 					await testutil.checkFileHash(
 						files,
-						unmodifiedFiles[md.id],
+						{}, // no modifications, will check against "unmodified" hashes
 						'Incorrect data produced when saving unmodified content'
 					);
 				});

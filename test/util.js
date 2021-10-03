@@ -22,6 +22,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { originalFiles, unmodifiedFiles } from './game-hashes.js';
 
 import {
 	Filesystem,
@@ -124,8 +125,9 @@ export default class TestUtil {
 			.digest('base64');
 	}
 
-	async checkExpectedFiles(expectedHashes) {
+	async checkOriginalFiles() {
 		let actualData = {};
+		const expectedHashes = originalFiles[this.idHandler];
 		for (const filename of Object.keys(expectedHashes)) {
 			actualData[filename] = await this.fs.read(filename);
 		}
@@ -150,10 +152,17 @@ export default class TestUtil {
 			actualHashes[filename] = TestUtil.hash(content);
 		}
 
+		const finalExpected = {
+			// Start with all files unmodified.
+			...unmodifiedFiles[this.idHandler],
+			// And override any that should have been changed.
+			...expectedHashes,
+		};
+
 		for (const [ filename, actualHash ] of Object.entries(actualHashes)) {
 			assert.equal(
 				actualHash,
-				expectedHashes[filename] || '',
+				finalExpected[filename] || '',
 				`${msg}: ${filename}`
 			);
 		}

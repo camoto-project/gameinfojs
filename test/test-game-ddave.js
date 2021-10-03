@@ -19,7 +19,6 @@
 
 import assert from 'assert';
 import TestUtil from './util.js';
-import { originalFiles, unmodifiedFiles } from './game-hashes.js';
 import { game_ddave as handler } from '../index.js';
 
 const md = handler.metadata();
@@ -32,7 +31,7 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 
 		// Make sure the files we expect are present, to avoid errors from
 		// supplying the wrong files.
-		await testutil.checkExpectedFiles(originalFiles[md.id]);
+		await testutil.checkOriginalFiles();
 	});
 
 	// This test updates a tileset stored in the main game .exe.
@@ -89,7 +88,6 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		await testutil.checkFileHash(
 			files,
 			{
-				'egadave.dav': unmodifiedFiles[md.id]['egadave.dav'],
 				'dave.exe': 'm0owJ/LTT5p1W9keSoaMUiSM4KQ=',
 			},
 			'Incorrect data produced after modification'
@@ -137,7 +135,6 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 			files,
 			{
 				'egadave.dav': 'FdwSt9Md1kdAmLt5E79qi2ju6uE=',
-				'dave.exe': unmodifiedFiles[md.id]['dave.exe'],
 			},
 			'Incorrect data produced after modification'
 		);
@@ -174,8 +171,7 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		await testutil.checkFileHash(
 			files,
 			{
-				'egadave.dav': unmodifiedFiles[md.id]['egadave.dav'],
-				'dave.exe': 'm0owJ/LTT5p1W9keSoaMUiSM4KQ=',
+				'dave.exe': 'TODO',
 			},
 			'Incorrect data produced after modification'
 		);
