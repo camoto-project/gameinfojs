@@ -114,6 +114,15 @@ export default class Game_CComic extends Game
 						planeCount: 4,
 					});
 				},
+				fnSave: newImage => {
+					const { content, warnings } = img_raw_planar_4bpp.write(newImage, {
+						width: 320,
+						height: 200,
+						planeCount: 4,
+					});
+					item.fnReplace(content.main);
+					return warnings;
+				},
 			};
 			gfx[`splash.${i}`] = item;
 		}
