@@ -478,7 +478,7 @@ export default class Game_Cosmo extends Game
 				// use of them all, but some of them require additional files to be
 				// added to the archive.
 				disabled: !file,
-				disabledReason: `File "${fileUpper}" does not exist in ${epData.volFilename}.`,
+				disabledReason: (!file && `File "${fileUpper}" does not exist in ${epData.volFilename}.`) || undefined,
 				type: Game.ItemTypes.Image,
 				fnExtract,
 				fnReplace,
@@ -677,12 +677,12 @@ export default class Game_Cosmo extends Game
 
 			// Write out the .VOL archive.
 			const outputVol = arc_vol_cosmo.generate(epData.vol);
-			const volFilename = epData.exe.attributes['filename.archive.episode'].value;
+			const volFilename = epData.exe.attributes['filename.archive.episode'].value.toLowerCase();
 			files[volFilename] = outputVol.main;
 
 			// Write out the .STN archive.
 			const outputStn = arc_vol_cosmo.generate(epData.stn);
-			const stnFilename = epData.exe.attributes['filename.archive.standard'].value;
+			const stnFilename = epData.exe.attributes['filename.archive.standard'].value.toLowerCase();
 			files[stnFilename] = outputStn.main;
 
 			// Write out any changes to the .EXE file.
