@@ -68,12 +68,16 @@ export default class TestUtil {
 	constructor(idHandler) {
 		assert.ok(idHandler, 'Format handler ID must be specified');
 		this.idHandler = idHandler;
+
+		this.fs = null;
+		const pathFiles = path.resolve(__dirname, this.idHandler);
+		if (fs.existsSync(pathFiles)) {
+			this.fs = new Filesystem(pathFiles);
+		}
 	}
 
 	getFilesystem() {
-		const pathFiles = path.resolve(__dirname, this.idHandler);
-		if (!fs.existsSync(pathFiles)) return null;
-		return new Filesystem(pathFiles);
+		return this.fs;
 	}
 
 	static buffersEqual(expected, actual, msg) {
@@ -118,5 +122,40 @@ export default class TestUtil {
 			.createHash('sha1')
 			.update(content)
 			.digest('base64');
+	}
+
+	async checkExpectedFiles(expectedHashes) {
+		let actualData = {};
+		for (const filename of Object.keys(expectedHashes)) {
+			actualData[filename] = await this.fs.read(filename);
+		}
+		return this.checkFileHash(
+			actualData,
+			expectedHashes,
+			'Incorrect version of test file, please supply the correct version'
+		);
+	}
+
+	// Check a collection of binary arrays match the expected hash.
+	checkFileHash(actualData, expectedHashes, msg) {
+		let actualHashes = {};
+
+		// Create dummy entries for all expected files.
+		for (const filename of Object.keys(expectedHashes)) {
+			actualHashes[filename] = '(file missing)';
+		}
+
+		// Hash the received data, overwriting hopefully all the above values.
+		for (const [ filename, content ] of Object.entries(actualData)) {
+			actualHashes[filename] = TestUtil.hash(content);
+		}
+
+		for (const [ filename, actualHash ] of Object.entries(actualHashes)) {
+			assert.equal(
+				actualHash,
+				expectedHashes[filename],
+				`${msg}: ${filename}`
+			);
+		}
 	}
 }

@@ -39,63 +39,69 @@ for (const handler of allGames) {
 
 		}); // metadata() tests
 
-		describe('identify()', function() {
+		describe('Tests against real game files', function() {
 
-			it('should identify the real game files (if present)', async function() {
+			before('check presence of test data', async function() {
 				// Skip tests if the game files are not present.
-				if (!fs) this.skip();
-
-				const result = await handler.identify(fs);
-				assert.equal(result.valid, true);
-			});
-
-			for (const handler2 of allGames) {
-				if (handler2 === handler) continue;
-
-				const md2 = handler2.metadata();
-				let testutil2 = new TestUtil(md2.id);
-
-				it(`should not identify ${md2.title} files`, async function() {
-					const fs2 = testutil2.getFilesystem();
-
-					// Skip tests if the game files are not present.
-					if (!fs2) this.skip();
-
-					const result = await handler.identify(fs2);
-					assert.equal(result.valid, false);
-				});
-			}
-
-		}); // identify() tests
-
-		describe('open()', function() {
-
-			it('should return valid items', async function() {
-				// Skip tests if the game files are not present.
-				if (!fs) this.skip();
-
-				const game = new handler(fs);
-				await game.open();
-				const items = await game.items();
-
-				assert.ok(items, 'items() returned an invalid value');
-				assert.ok(Object.keys(items).length > 0, 'items() returned no items');
-
-				// Walk the item list and ensure they are valid.
-				function checkItems(prefix, startItems) {
-					for (const [id, item] of Object.entries(startItems)) {
-						assert.ok(item.title, `Missing ${prefix}${id}.title`);
-						assert.ok(item.type, `Missing ${prefix}${id}.type`);
-						if (!item.disabled) {
-							assert.ok(!item.disabledReason, `Disabled reason given on non-disabled item ${prefix}${id}`);
-						}
-						if (item.children) checkItems(`${prefix}${id}.children.`, item.children);
-					}
+				if (!fs) {
+					this.skip();
+					return;
 				}
-				checkItems('', items);
 			});
 
-		}); // open() tests
+			describe('identify()', function() {
+
+				it('should identify the real game files', async function() {
+					const result = await handler.identify(fs);
+					assert.equal(result.valid, true);
+				});
+
+				for (const handler2 of allGames) {
+					if (handler2 === handler) continue;
+
+					const md2 = handler2.metadata();
+					let testutil2 = new TestUtil(md2.id);
+
+					it(`should not identify ${md2.title} files`, async function() {
+						const fs2 = testutil2.getFilesystem();
+
+						// Skip tests if the game files are not present.
+						if (!fs2) this.skip();
+
+						const result = await handler.identify(fs2);
+						assert.equal(result.valid, false);
+					});
+				}
+
+			}); // identify() tests
+
+			describe('open()', function() {
+
+				it('should return valid items', async function() {
+					const game = new handler(fs);
+					await game.open();
+					const items = await game.items();
+
+					assert.ok(items, 'items() returned an invalid value');
+					assert.ok(Object.keys(items).length > 0, 'items() returned no items');
+
+					// Walk the item list and ensure they are valid.
+					function checkItems(prefix, startItems) {
+						for (const [id, item] of Object.entries(startItems)) {
+							assert.ok(item.title, `Missing ${prefix}${id}.title`);
+							assert.ok(item.type, `Missing ${prefix}${id}.type`);
+							if (!item.disabled) {
+								assert.ok(!item.disabledReason, `Disabled reason given on non-disabled item ${prefix}${id}`);
+							}
+							if (item.children) checkItems(`${prefix}${id}.children.`, item.children);
+						}
+					}
+					checkItems('', items);
+				});
+
+			}); // open() tests
+
+		}); // Tests against real game files
 
 	}); // Standard tests
 }
