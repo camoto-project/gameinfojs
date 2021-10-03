@@ -153,7 +153,7 @@ export default class TestUtil {
 		for (const [ filename, actualHash ] of Object.entries(actualHashes)) {
 			assert.equal(
 				actualHash,
-				expectedHashes[filename],
+				expectedHashes[filename] || '',
 				`${msg}: ${filename}`
 			);
 		}
