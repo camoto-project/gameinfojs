@@ -24,6 +24,8 @@ import {
 	all as allGames,
 } from '../index.js';
 
+import { originalFiles, unmodifiedFiles } from './game-hashes.js';
+
 for (const handler of allGames) {
 	const md = handler.metadata();
 	let testutil = new TestUtil(md.id);
@@ -47,6 +49,13 @@ for (const handler of allGames) {
 					this.skip();
 					return;
 				}
+
+				assert.ok(originalFiles[md.id], 'Hashes missing from ./game-hashes.js');
+				assert.ok(unmodifiedFiles[md.id], 'Hashes missing from ./game-hashes.js');
+
+				// Make sure the files we expect are present, to avoid errors from
+				// supplying the wrong files.
+				await testutil.checkExpectedFiles(originalFiles[md.id]);
 			});
 
 			describe('identify()', function() {
@@ -100,6 +109,24 @@ for (const handler of allGames) {
 				});
 
 			}); // open() tests
+
+			describe('save()', function() {
+
+				it('should save successfully with no changes', async function() {
+					const game = new handler(fs);
+					await game.open();
+					await game.items();
+
+					const { files } = await game.save();
+
+					await testutil.checkFileHash(
+						files,
+						unmodifiedFiles[md.id],
+						'Incorrect data produced when saving unmodified content'
+					);
+				});
+
+			}); // save() tests
 
 		}); // Tests against real game files
 
