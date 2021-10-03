@@ -108,6 +108,9 @@ export default class Game
 	 * disabled: `true` if the user is not permitted to open the item, `false` or
 	 *   `undefined` if it can be opened.
 	 *
+	 * disabledReason: String displayed to user explaining why the item is
+	 *   disabled, only valid if `disabled` is `true`.
+	 *
 	 * limits: restrictions on what can be done to ensure fnSave() can save the
 	 *   file.  Depends on the type:
 	 *
@@ -148,14 +151,15 @@ export default class Game
 // Standard item types used for building the tree of editable game items.  These
 // roughly translate to one type per editor.
 Game.ItemTypes = {
-	Folder: 'folder',         // N/A
-	Attributes: 'attributes', // ?
-	B800: 'b800',             // ?
-	Image: 'image',           // Image or Image[] instance
-	Palette: 'palette',       // Image instance
-	Map: 'map',               // Map instance
-	Music: 'music',           // Music instance
-	Sound: 'sound',           // ?
+	Folder: 'folder',           // N/A
+	Attributes: 'attributes',   // Array<gamecode.js objects>
+	B800: 'b800',               // ?
+	Image: 'image',             // Image or Image[] instance
+	Instruments: 'instruments', // Music instance but with no musical notes
+	Map: 'map',                 // Map instance
+	Music: 'music',             // Music instance
+	Palette: 'palette',         // Image instance
+	Sound: 'sound',             // ?
 };
 
 Game.Severity = {
