@@ -607,6 +607,14 @@ export default class Game_DDave extends Game
 
 					return map;
 				};
+
+				item.fnSave = newMap => {
+					const content = map_ddave.generate(newMap);
+					item.fnReplace(content.main);
+					if (fileE && content.enemy) {
+						fileE.getContent = () => content.enemy;
+					}
+				};
 			}
 
 			levels[`level.${i}`] = item;
