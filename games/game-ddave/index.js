@@ -127,9 +127,10 @@ export default class Game_DDave extends Game
 		this.tileset = {};
 
 		for (const xga of Object.keys(tilesetHandler)) {
-			const filename = `${xga}dave.dav`;
+			let filename = `${xga}dave.dav`;
 			if (xga === 'ega') {
 				// egadave.dav gets read from the filesystem.
+				filename = this.exeFields.attributes['filename.gfx.ega'].value.toLowerCase();
 				let contentGfx;
 				try {
 					contentGfx = await this.filesystem.read(filename);
@@ -156,6 +157,9 @@ export default class Game_DDave extends Game
 					// that upon save it will convert the tileset back to the underlying
 					// file format.  This saves us from having to search for the file
 					// inside the .exe again during save while we already have it now.
+					// It works by converting the tileset instance back into raw data
+					// on-the-fly any time the archive file is opened again, as it will
+					// be when the archive's generate() function is called.
 					fileGfx.getContent = () => {
 						const generated = tilesetHandler[xga].write(this.tileset[xga]);
 						this.saveWarnings = this.saveWarnings.concat(generated.warnings);
@@ -307,7 +311,8 @@ export default class Game_DDave extends Game
 
 		if (this.tileset.ega) {
 			const generated = tls_ddave_ega.write(this.tileset.ega);
-			files['egadave.dav'] = generated.content.main;
+			const filename = this.exeFields.attributes['filename.gfx.ega'].value.toLowerCase();
+			files[filename] = generated.content.main;
 			warnings = warnings.concat(generated.warnings);
 		}
 
