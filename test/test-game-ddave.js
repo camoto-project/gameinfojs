@@ -19,6 +19,7 @@
 
 import assert from 'assert';
 import TestUtil from './util.js';
+import { originalFiles, unmodifiedFiles } from './game-hashes.js';
 import { game_ddave as handler } from '../index.js';
 
 const md = handler.metadata();
@@ -29,21 +30,18 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 	before('check test data', async function() {
 		if (!fs) this.skip();
 
-		// First, make sure the files we expect are present, to avoid errors from
+		// Make sure the files we expect are present, to avoid errors from
 		// supplying the wrong files.
-		await testutil.checkExpectedFiles({
-			'egadave.dav': 'Pcoq5V3xYotN/PFeMzIH3k2X/88=',
-			'dave.exe': 'qOFJedQlm8CGt9a4ztV1xmxPn+8=',
-		});
+		await testutil.checkExpectedFiles(originalFiles[md.id]);
 	});
 
 	it('should allow tileset modification', async function() {
 		const game = new handler(fs);
-		const warnings = await game.open();
+		const gameWarnings = await game.open();
 		const items = await game.items();
 
-		assert.equal(warnings.length, 0,
-			'Expected no warnings, got: ' + JSON.stringify(warnings));
+		assert.equal(gameWarnings.length, 0,
+			'Expected no warnings, got: ' + JSON.stringify(gameWarnings));
 
 		// Try to find the VGA tileset.
 		assert.ok(items.graphics,
@@ -58,25 +56,9 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 				+ JSON.stringify(items.graphics)
 		);
 
-		// Save with no changes first.
-		let {
-			files: output_unmodified,
-			warnings: saveWarnings_unmodified,
-		} = await game.save();
-		await testutil.checkFileHash(
-			output_unmodified,
-			{
-				'egadave.dav': '78MFJ6bRx+zca7uw91jFhNW5sv8=',
-				'dave.exe': '1ch440gcS9u19fzJiDMaM+9OA+Q=',
-			},
-			'Incorrect data produced when saving unmodified content'
-		);
-		assert.equal(saveWarnings_unmodified.length, 0,
-			'Unexpected warnings when saving: ' + JSON.stringify(saveWarnings_unmodified));
-
 		// Load the VGA tileset.
-		const itemTileset = items.graphics.children['vga-map'];
-		const imgTileset = await itemTileset.fnOpen();
+		const item = items.graphics.children['vga-map'];
+		const imgTileset = await item.fnOpen();
 		assert.ok(imgTileset, 'Unable to open "vga-map" item');
 
 		// Make sure it looks right.
@@ -100,20 +82,57 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		tile.pixels[0] = 10;
 		tile.pixels[15] = 10;
 
-		itemTileset.fnSave(imgTileset);
+		item.fnSave(imgTileset);
 
-		const { files: output, warnings: saveWarnings } = await game.save();
+		const { files, warnings } = await game.save();
 		await testutil.checkFileHash(
-			output,
+			files,
 			{
-				'egadave.dav': '78MFJ6bRx+zca7uw91jFhNW5sv8=',
+				'egadave.dav': unmodifiedFiles[md.id]['egadave.dav'],
 				'dave.exe': 'm0owJ/LTT5p1W9keSoaMUiSM4KQ=',
 			},
 			'Incorrect data produced after modification'
 		);
-		assert.equal(saveWarnings.length, 0,
-			'Unexpected warnings when saving: ' + JSON.stringify(saveWarnings));
+		assert.equal(warnings.length, 0,
+			'Unexpected warnings when saving: ' + JSON.stringify(warnings));
+	});
 
+	// Re-enable this test once map-ddave generate() is implemented.
+	it.skip('should allow map modification', async function() {
+		const game = new handler(fs);
+		await game.open();
+		const items = await game.items();
+
+		// Load the first level.
+		const item = items.levels.children['level.1'];
+		const level = await item.fnOpen();
+		assert.ok(level, 'Unable to open "level.1" item');
+
+		// Make sure it looks right.
+		assert.equal(level.type, 'map2d', 'Wrong level type');
+		assert.equal(level.layers.length, 2, 'Incorrect number of layers');
+
+		const bg = level.layers[0];
+		assert.equal(bg.tiles[0][0], 17, 'Incorrect tile code');
+		assert.equal(bg.tiles[0][1], 17, 'Incorrect tile code');
+
+		// Modify the image.
+		bg.tiles[0] = 2;
+		bg.tiles[5] = 3;
+
+		item.fnSave(level);
+
+		const { files, warnings } = await game.save();
+		await testutil.checkFileHash(
+			files,
+			{
+				'egadave.dav': unmodifiedFiles[md.id]['egadave.dav'],
+				'dave.exe': 'm0owJ/LTT5p1W9keSoaMUiSM4KQ=',
+			},
+			'Incorrect data produced after modification'
+		);
+		assert.equal(warnings.length, 0,
+			'Unexpected warnings when saving: ' + JSON.stringify(warnings));
 	});
 
 }); // Tests with real game files
