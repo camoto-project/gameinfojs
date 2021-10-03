@@ -815,23 +815,23 @@ export default class Game_Nomad extends Game {
 		let warnings = [];
 
 		const newAnimDat = arc_dat_papyrus_v1.generate(this.datAnim);
-		files[this.datAnimFilename] = newAnimDat.main;
+		files[this.datAnimFilename.toLowerCase()] = newAnimDat.main;
 
 		const newConverseDat = arc_dat_papyrus_v1.generate(this.datConverse);
-		files[this.datConverseFilename] = newConverseDat.main;
+		files[this.datConverseFilename.toLowerCase()] = newConverseDat.main;
 
 		const newInventDat = arc_dat_papyrus_v1.generate(this.datInvent);
-		files[this.datInventFilename] = newInventDat.main;
+		files[this.datInventFilename.toLowerCase()] = newInventDat.main;
 
 		const newSamplesDat = arc_dat_papyrus_v1.generate(this.datSamples);
-		files[this.datSamplesFilename] = newSamplesDat.main;
+		files[this.datSamplesFilename.toLowerCase()] = newSamplesDat.main;
 
 		const newTestDat = arc_dat_papyrus_v1.generate(this.datTest);
-		files[this.datTestFilename] = newTestDat.main;
+		files[this.datTestFilename.toLowerCase()] = newTestDat.main;
 
 		// Write out any changes to the .EXE file.
-		const outputExe = exe_nomad.patch(this.exeContent, this.exe);
-		files[exeFilename] = outputExe.main;
+		const outputExe = exe_nomad.patch({ main: this.exeContent }, this.exe);
+		files[exeFilename.toLowerCase()] = outputExe.main;
 
 		return {
 			files,
