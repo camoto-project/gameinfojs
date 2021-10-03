@@ -35,7 +35,8 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 		await testutil.checkExpectedFiles(originalFiles[md.id]);
 	});
 
-	it('should allow tileset modification', async function() {
+	// This test updates a tileset stored in the main game .exe.
+	it('should allow VGA tileset modification', async function() {
 		const game = new handler(fs);
 		const gameWarnings = await game.open();
 		const items = await game.items();
@@ -90,6 +91,53 @@ describe(`Tests with real game files for ${md.title} [${md.id}]`, function() {
 			{
 				'egadave.dav': unmodifiedFiles[md.id]['egadave.dav'],
 				'dave.exe': 'm0owJ/LTT5p1W9keSoaMUiSM4KQ=',
+			},
+			'Incorrect data produced after modification'
+		);
+		assert.equal(warnings.length, 0,
+			'Unexpected warnings when saving: ' + JSON.stringify(warnings));
+	});
+
+	// This test updates a tileset stored in the separate file egadave.dav.
+	it('should allow EGA tileset modification', async function() {
+		const game = new handler(fs);
+		await game.open();
+		const items = await game.items();
+
+		// Load the EGA tileset.
+		const item = items.graphics.children['ega-map'];
+		const imgTileset = await item.fnOpen();
+		assert.ok(imgTileset, 'Unable to open "ega-map" item');
+
+		// Make sure it looks right.
+		assert.equal(imgTileset.length, 1, 'Incorrect number of images in ega-map tileset');
+		assert.equal(imgTileset[0].frames.length, 53, 'Incorrect number of frames in ega-map tileset');
+
+		assert.equal(imgTileset[0].palette[0][0], 0, 'Incorrect red value for palette entry 0');
+		assert.equal(imgTileset[0].palette[0][1], 0, 'Incorrect green value for palette entry 0');
+		assert.equal(imgTileset[0].palette[0][2], 0, 'Incorrect blue value for palette entry 0');
+
+		assert.equal(imgTileset[0].palette[10][0], 85, 'Incorrect red value for palette entry 10');
+		assert.equal(imgTileset[0].palette[10][1], 255, 'Incorrect green value for palette entry 10');
+		assert.equal(imgTileset[0].palette[10][2], 85, 'Incorrect blue value for palette entry 10');
+
+		// Examine the first tile.
+		const tile = imgTileset[0].frames[0];
+		assert.equal(tile.width, 16, 'Incorrect tile width');
+		assert.equal(tile.height, 16, 'Incorrect tile height');
+
+		// Modify the image.
+		tile.pixels[0] = 10;
+		tile.pixels[15] = 10;
+
+		item.fnSave(imgTileset);
+
+		const { files, warnings } = await game.save();
+		await testutil.checkFileHash(
+			files,
+			{
+				'egadave.dav': 'FdwSt9Md1kdAmLt5E79qi2ju6uE=',
+				'dave.exe': unmodifiedFiles[md.id]['dave.exe'],
 			},
 			'Incorrect data produced after modification'
 		);
