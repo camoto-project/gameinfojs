@@ -28,10 +28,10 @@
   },
   "homepage": "https://github.com/camoto-project/gameinfojs#readme",
   "dependencies": {
-    "@camoto/gamearchive": "^4.0.0",
-    "@camoto/gamecode": "^1.2.3",
-    "@camoto/gamecomp": "^2.7.0",
-    "@camoto/gamegraphics": "^2.3.0",
+    "@camoto/gamearchive": "^4.4.0",
+    "@camoto/gamecode": "^2.0.0",
+    "@camoto/gamecomp": "^4.2.0",
+    "@camoto/gamegraphics": "^2.4.0",
     "@camoto/gamemap": "^1.2.0",
     "@camoto/gamemusic": "^2.0.3",
     "debug": "^4.3.1"
