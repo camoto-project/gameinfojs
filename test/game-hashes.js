@@ -35,6 +35,14 @@ export const originalFiles = {
 		'egadave.dav': 'Pcoq5V3xYotN/PFeMzIH3k2X/88=',
 		'dave.exe': 'qOFJedQlm8CGt9a4ztV1xmxPn+8=',
 	},
+	'game-nomad': {
+		'nomad.exe': 'eHYiuKOtZdvH2/Gu+husuOUIPT8=',
+		'anim.dat': 'qvlFPDPNJfwvjrC1TTq87eQ+sow=',
+		'converse.dat': 'JNU1bvb4mynp2U9QE6PpfHbC3Mo=',
+		'invent.dat': '8EZgGHcjJwlpRF1/s3b5wE4qTYo=',
+		'samples.dat': 'I+Y/69APuhLQ+V5m789sRC7CfHo=',
+		'test.dat': '56mJ8xJihg5FhuqdSjroaOiQUVY=',
+	},
 };
 
 export const unmodifiedFiles = {
@@ -54,5 +62,13 @@ export const unmodifiedFiles = {
 	'game-ddave': {
 		'egadave.dav': '78MFJ6bRx+zca7uw91jFhNW5sv8=',
 		'dave.exe': '1ch440gcS9u19fzJiDMaM+9OA+Q=',
+	},
+	'game-nomad': {
+		'nomad.exe': 'eHYiuKOtZdvH2/Gu+husuOUIPT8=',
+		'anim.dat': 'qvlFPDPNJfwvjrC1TTq87eQ+sow=',
+		'converse.dat': 'JNU1bvb4mynp2U9QE6PpfHbC3Mo=',
+		'invent.dat': '8EZgGHcjJwlpRF1/s3b5wE4qTYo=',
+		'samples.dat': 'I+Y/69APuhLQ+V5m789sRC7CfHo=',
+		'test.dat': '56mJ8xJihg5FhuqdSjroaOiQUVY=',
 	},
 };
