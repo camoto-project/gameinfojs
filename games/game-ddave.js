@@ -189,38 +189,40 @@ export default class Game_DDave extends Game
 
 		// Level border
 		{
+			let item = {
+				title: 'Map border',
+				type: Game.ItemTypes.Image,
+			};
 			const filename = `border.raw`;
 			let file = this.exeArchive.files.find(f => f.name.toLowerCase() === filename);
 			if (!file) {
-				throw new Error(`Unable to find "${filename}" inside dave.exe.`);
-			}
+				item.disabled = true;
+				item.disabledReason = `Unable to find "${filename}" inside dave.exe.`;
+			} else {
 
-			// Function to extract the raw file.
-			const fnExtract = () => file.getContent();
+				// Function to extract the raw file.
+				item.fnExtract = () => file.getContent();
 
-			// Function to overwrite the file.
-			const fnReplace = content => {
-				// Replace getContent() with a function that returns the new content.
-				file.getContent = () => content;
-				file.diskSize = file.nativeSize = content.length;
-			};
+				// Function to overwrite the file.
+				item.fnReplace = content => {
+					// Replace getContent() with a function that returns the new content.
+					file.getContent = () => content;
+					file.diskSize = file.nativeSize = content.length;
+				};
 
-			gfx['border'] = {
-				title: 'Map border',
-				type: Game.ItemTypes.Image,
-				fnExtract,
-				fnReplace,
-				fnOpen: () => new Image({
+				item.fnOpen = () => new Image({
 					width: file.nativeSize - 1,
 					height: 1,
 					frames: [
 						new Frame({
-							pixels: fnExtract(),
+							pixels: item.fnExtract(),
 						}),
 					],
 					palette: this.palVGA.palette,
-				}),
-			};
+				});
+			}
+
+			gfx['border'] = item;
 		}
 
 		// A list of gamecode.js attribute keys we don't want to display to the
@@ -516,37 +518,39 @@ export default class Game_DDave extends Game
 		for (let i = 0; i < 11; i++) {
 			const padLevel = i ? i.toString().padStart(2, '0') : 't';
 
-			// Find the main map file.
 			const filename = `level${padLevel}.dav`;
-			let file = this.exeArchive.files.find(f => f.name.toLowerCase() === filename);
-			if (!file) {
-				throw new Error(`Unable to find "${filename}" inside dave.exe.`);
-			}
 
-			// Find the enemy data.
-			const filenameE = `enemy${padLevel}.dav`;
-			let fileE = this.exeArchive.files.find(f => f.name.toLowerCase() === filenameE);
-			// Ignore missing file as there won't be one for the title level.
-
-			// Function to extract the raw file.
-			const fnExtract = () => file.getContent();
-
-			// Function to overwrite the file.
-			const fnReplace = content => {
-				// Replace getContent() with a function that returns the new content.
-				file.getContent = () => content;
-				file.diskSize = file.nativeSize = content.length;
-			};
-
-			levels[`level.${i}`] = {
+			let item = {
 				title: i ? `Level ${i}` : 'Title level',
 				subtitle: filename,
 				type: Game.ItemTypes.Map,
-				fnExtract,
-				fnReplace,
-				fnOpen: () => {
+			};
+
+			// Find the main map file.
+			let file = this.exeArchive.files.find(f => f.name.toLowerCase() === filename);
+			if (!file) {
+				item.disabled = true;
+				item.disabledReason = `Unable to find "${filename}" inside dave.exe.`;
+			} else {
+
+				// Find the enemy data.
+				const filenameE = `enemy${padLevel}.dav`;
+				let fileE = this.exeArchive.files.find(f => f.name.toLowerCase() === filenameE);
+				// Ignore missing file as there won't be one for the title level.
+
+				// Function to extract the raw file.
+				item.fnExtract = () => file.getContent();
+
+				// Function to overwrite the file.
+				item.fnReplace = content => {
+					// Replace getContent() with a function that returns the new content.
+					file.getContent = () => content;
+					file.diskSize = file.nativeSize = content.length;
+				};
+
+				item.fnOpen = () => {
 					let map = map_ddave.parse({
-						main: fnExtract(),
+						main: item.fnExtract(),
 						enemy: fileE && fileE.getContent(),
 					}, {
 						playerStartX: this.exeFields[`map.startX.${i}`],
@@ -602,8 +606,10 @@ export default class Game_DDave extends Game
 					map.animationDelay = 150;
 
 					return map;
-				},
-			};
+				};
+			}
+
+			levels[`level.${i}`] = item;
 		}
 
 		return levels;
