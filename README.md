@@ -69,7 +69,7 @@ See `cli/index.js` for example use.  The quick start is:
 
 ## Installation as a contributor
 
-If you would like to help add more file formats to the library, great!
+If you would like to help add more games to the library, great!
 Clone the repo, and to get started:
 
     npm install
@@ -78,7 +78,25 @@ Run the tests to make sure everything worked:
 
     npm test
 
-You're ready to go!  To add a new game:
+Most of the tests require original files from the games, which aren't part of
+the git repo.  So to fully run the tests (and to add support for new games)
+you'll need to copy the game files into the test folder:
+
+ 1. Find out the identifier for the game in question, e.g. `game-ddave` is the
+    identifier for Dangerous Dave.
+    
+ 2. Make a folder with this name inside the `test` folder, so in this case the
+    command would be `mkdir test/game-ddave`
+    
+ 3. Copy the game files into this new folder.  Only the files read and written
+    by the format handler need to be included, but extra files (such as the
+    game's documentation files) won't hurt.
+    
+ 4. Run the tests again and confirm they are no longer showing as "skipped".
+    You can run only the tests for this game with a command like
+    `npm test -- -g game-ddave`.
+
+Now you're ready to go!  To add a new game:
 
  1. First make sure the file formats you need have been implemented in the other
     support libraries, e.g. all the archive formats are supported by
@@ -94,13 +112,24 @@ During development you can test your code like this:
 
     # Open a sample game and list the files, with debug messages on.
     $ DEBUG='game*' ./bin/gameinfo.js open /path/to/game list
-
-    # Run the unit tests to ensure code passes the lint checks.
+    
+    # Run the unit tests just for this game, using game-ddave as an example.
+    $ DEBUG='gameinfo:*' npm test -- -g game-ddave
+    
+    # Run all the unit tests to ensure code passes the lint checks.
     $ DEBUG='gameinfo:*' npm test
 
+Only very basic checks are performed with the standard tests.  You should create
+an extra test file that actually performs some modifications, to ensure
+everything is functioning correctly.
+
+This is done by creating an extra `.js` file in the `test/` folder.  Copy one
+of the existing files such as `test/game-ddave.js` to use as an example.  The
+new file will be picked up automatically when the tests are run.
+
 Once your code is at the point where you've gone as far as you can go with the
-CLI, you will probably want to test it with the web version of Camoto, so you
-can view images, maps, etc.
+CLI and unit tests, you will probably want to test it with the web version of
+Camoto, so you can view images, maps, etc.
 
 To do this, clone the [studiojs repo](https://github.com/camoto-project/studiojs)
 and follow the instructions to get it running locally.  Then replace the
