@@ -575,7 +575,8 @@ export default class Game_Nomad extends Game {
 					// Use GAME.PAL if the image requires it;
 					// otherwise use backg.pal
 					if (gamePalImages.includes(index)) {
-						rolImg.palette = gamePal;
+						const fullGamePal = Object.assign([], paletteVGA256(), gamePal);
+						rolImg.palette = fullGamePal;
 
 					} else {
 						const palContent = {
