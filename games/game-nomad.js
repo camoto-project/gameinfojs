@@ -32,8 +32,8 @@ import {
 import {
 	pal_vga_6bit_papyrus,
 	img_raw_linear_8bpp,
-	Image_Stp_V2,
-	Image_Rol_V2,
+	img_stp_v2,
+	img_rol_v2,
 	img_del,
 	img_pln,
 	paletteVGA256
@@ -324,13 +324,13 @@ export default class Game_Nomad extends Game {
 						main: fnExtract(),
 					};
 
-					let stpImg = Image_Stp_V2.read(content);
+					let stpImg = img_stp_v2.read(content);
 					stpImg.palette = gamePal;
 
 					return stpImg;
 				},
 				fnSave: (content) => {
-					const outContent = Image_Stp_V2.write(content);
+					const outContent = img_stp_v2.write(content);
 					fnReplace(outContent.content.main);
 
 					return {
@@ -395,7 +395,7 @@ export default class Game_Nomad extends Game {
 						main: fnExtract(),
 					};
 
-					let stpImg = Image_Stp_V2.read(content);
+					let stpImg = img_stp_v2.read(content);
 
 					// Use GAME.PAL if the image requires it;
 					// otherwise use backg.pal
@@ -413,7 +413,7 @@ export default class Game_Nomad extends Game {
 					return stpImg;
 				},
 				fnSave: (content) => {
-					const outContent = Image_Stp_V2.write(content);
+					const outContent = img_stp_v2.write(content);
 					fnReplace(outContent.content.main);
 
 					return {
@@ -457,13 +457,13 @@ export default class Game_Nomad extends Game {
 						main: fnExtract(),
 					};
 
-					let stpImg = Image_Stp_V2.read(content);
+					let stpImg = img_stp_v2.read(content);
 					stpImg.palette = gamePal;
 
 					return stpImg;
 				},
 				fnSave: (content) => {
-					const outContent = Image_Stp_V2.write(content);
+					const outContent = img_stp_v2.write(content);
 					fnReplace(outContent.content.main);
 
 					return {
@@ -507,13 +507,13 @@ export default class Game_Nomad extends Game {
 						main: fnExtract(),
 					};
 
-					let stpImg = Image_Stp_V2.read(content);
+					let stpImg = img_stp_v2.read(content);
 					stpImg.palette = gamePal;
 
 					return stpImg;
 				},
 				fnSave: (content) => {
-					const outContent = Image_Stp_V2.write(content);
+					const outContent = img_stp_v2.write(content);
 					fnReplace(outContent.content.main);
 
 					return {
@@ -570,7 +570,7 @@ export default class Game_Nomad extends Game {
 						main: fnExtract(),
 					};
 
-					let rolImg = Image_Rol_V2.read(content);
+					let rolImg = img_rol_v2.read(content);
 
 					// Use GAME.PAL if the image requires it;
 					// otherwise use backg.pal
@@ -589,7 +589,7 @@ export default class Game_Nomad extends Game {
 					return rolImg;
 				},
 				fnSave: (content) => {
-					const outContent = Image_Rol_V2.write(content);
+					const outContent = img_rol_v2.write(content);
 					fnReplace(outContent.content.main);
 
 					return {
